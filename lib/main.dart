@@ -47,10 +47,10 @@ void main() async {
   final nutritionService = NutritionService();
   final foodRecommendationService = FoodRecommendationService();
 
-  // ── AI Service ──
-  const geminiKey = String.fromEnvironment('GEMINI_API_KEY');
+  // ── AI Service (Groq) ──
+  const groqKey = String.fromEnvironment('GROQ_API_KEY');
   final geminiService =
-      geminiKey.isNotEmpty ? GeminiService(apiKey: geminiKey) : null;
+      groqKey.isNotEmpty ? GeminiService(apiKey: groqKey) : null;
 
   runApp(
     MultiProvider(
