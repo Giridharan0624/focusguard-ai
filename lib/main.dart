@@ -22,6 +22,8 @@ import 'viewmodels/checkin_viewmodel.dart';
 import 'viewmodels/chat_viewmodel.dart';
 import 'viewmodels/nutrition_viewmodel.dart';
 import 'viewmodels/history_viewmodel.dart';
+import 'viewmodels/theme_viewmodel.dart';
+import 'services/voice_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -79,6 +81,7 @@ void main() async {
             nutritionService: nutritionService,
             foodRecommendationService: foodRecommendationService,
             repository: nutritionRepo,
+            geminiService: geminiService,
           ),
         ),
         ChangeNotifierProvider(
@@ -95,6 +98,12 @@ void main() async {
               repository: checkinRepo,
             ),
           ),
+        ChangeNotifierProvider(create: (_) => ThemeViewModel()),
+        ChangeNotifierProvider(create: (_) {
+          final voice = VoiceService();
+          voice.initialize();
+          return voice;
+        }),
       ],
       child: const FocusGuardApp(),
     ),

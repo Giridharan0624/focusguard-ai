@@ -19,35 +19,37 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
 
-  final _screens = const [
-    DashboardScreen(),
-    CheckInScreen(),
-    NutritionScreen(),
-    HistoryScreen(),
-  ];
+  void _switchTab(int index) {
+    setState(() => _currentIndex = index);
+    if (index == 2) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.read<NutritionViewModel>().loadToday();
+      });
+    }
+    if (index == 3) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.read<HistoryViewModel>().load();
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final hasCheckin = context.watch<CheckInViewModel>().result != null;
 
     return Scaffold(
-      body: IndexedStack(index: _currentIndex, children: _screens),
+      body: IndexedStack(
+        index: _currentIndex,
+        children: [
+          DashboardScreen(onSwitchTab: _switchTab),
+          const CheckInScreen(),
+          const NutritionScreen(),
+          const HistoryScreen(),
+        ],
+      ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
-        onTap: (i) {
-          setState(() => _currentIndex = i);
-          // Schedule data reload after build completes
-          if (i == 2) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              context.read<NutritionViewModel>().loadToday();
-            });
-          }
-          if (i == 3) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              context.read<HistoryViewModel>().load();
-            });
-          }
-        },
+        onTap: _switchTab,
         type: BottomNavigationBarType.fixed,
         items: [
           const BottomNavigationBarItem(

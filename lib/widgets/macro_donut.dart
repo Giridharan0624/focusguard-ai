@@ -120,7 +120,7 @@ class _MacroRow extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         Text(label,
-            style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
+            style: TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
         const Spacer(),
         Text('${grams.round()}g',
             style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),

@@ -28,17 +28,9 @@ class NutritionProgressBar extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(label,
-                  style: const TextStyle(
-                      fontSize: 13, color: AppTheme.textSecondary)),
-              Text(
-                '${current.round()}$unit / ${goal.round()}$unit',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: color,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              Text(label, style: TextStyle(fontSize: 13, color: AppTheme.ts(context))),
+              Text('${current.round()}$unit / ${goal.round()}$unit',
+                  style: TextStyle(fontSize: 13, color: color, fontWeight: FontWeight.w600)),
             ],
           ),
           const SizedBox(height: 6),
@@ -46,8 +38,8 @@ class NutritionProgressBar extends StatelessWidget {
             borderRadius: BorderRadius.circular(6),
             child: LinearProgressIndicator(
               value: percent / 100,
-              minHeight: 8,
-              backgroundColor: AppTheme.surfaceLight,
+              minHeight: 6,
+              backgroundColor: AppTheme.sl(context),
               valueColor: AlwaysStoppedAnimation(color),
             ),
           ),

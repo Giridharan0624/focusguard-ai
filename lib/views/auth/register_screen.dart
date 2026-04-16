@@ -58,7 +58,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     validator: (v) =>
                         v != null && v.contains('@') ? null : 'Enter a valid email',
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
                   TextFormField(
                     controller: _passwordController,
                     obscureText: true,
@@ -67,10 +67,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       prefixIcon: Icon(Icons.lock_outline),
                     ),
                     validator: (v) => v != null && v.length >= 6
-                        ? null
-                        : 'Minimum 6 characters',
+                        ? null : 'Minimum 6 characters',
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
                   TextFormField(
                     controller: _confirmController,
                     obscureText: true,
@@ -79,18 +78,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       prefixIcon: Icon(Icons.lock_outline),
                     ),
                     validator: (v) => v == _passwordController.text
-                        ? null
-                        : 'Passwords do not match',
+                        ? null : 'Passwords do not match',
                   ),
-                  const SizedBox(height: 8),
                   if (authVM.errorMessage != null)
                     Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Text(
-                        authVM.errorMessage!,
-                        style: const TextStyle(color: AppTheme.riskCritical),
-                        textAlign: TextAlign.center,
-                      ),
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Text(authVM.errorMessage!,
+                          style: const TextStyle(color: AppTheme.riskCritical, fontSize: 13),
+                          textAlign: TextAlign.center),
                     ),
                   const SizedBox(height: 24),
                   SizedBox(
@@ -98,11 +93,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     child: ElevatedButton(
                       onPressed: authVM.isLoading ? null : _register,
                       child: authVM.isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
+                          ? const SizedBox(height: 20, width: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2))
                           : const Text('Register'),
                     ),
                   ),

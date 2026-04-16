@@ -115,8 +115,8 @@ class ResultScreen extends StatelessWidget {
                       label: 'Now',
                       score: result.score,
                       color: AppTheme.riskColor(result.riskLevel)),
-                  const Icon(Icons.arrow_forward_rounded,
-                      color: AppTheme.textHint),
+                  Icon(Icons.arrow_forward_rounded,
+                      color: AppTheme.th(context)),
                   _ScoreColumn(
                       label: 'After',
                       score: result.simulatedScore,
@@ -171,7 +171,7 @@ class _ScoreColumn extends StatelessWidget {
             style: TextStyle(
                 fontSize: 36, fontWeight: FontWeight.bold, color: color)),
         Text(label,
-            style: const TextStyle(fontSize: 12, color: AppTheme.textHint)),
+            style: TextStyle(fontSize: 12, color: AppTheme.th(context))),
       ],
     );
   }

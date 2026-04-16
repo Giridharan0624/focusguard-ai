@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
+import '../services/gemini_service.dart';
 import '../viewmodels/nutrition_viewmodel.dart';
 import '../widgets/calorie_ring.dart';
 import '../widgets/macro_donut.dart';
+import '../widgets/mic_button.dart';
 import '../widgets/nutrition_progress_bar.dart';
 
 class NutritionScreen extends StatefulWidget {
@@ -22,6 +24,44 @@ class _NutritionScreenState extends State<NutritionScreen> {
     super.initState();
     final vm = context.read<NutritionViewModel>();
     Future.microtask(() { if (mounted) vm.loadToday(); });
+  }
+
+  Future<void> _handleVoiceFood(BuildContext context, String text) async {
+    final vm = context.read<NutritionViewModel>();
+    // Use Groq to parse food from voice
+    const groqKey = String.fromEnvironment('GROQ_API_KEY');
+    if (groqKey.isEmpty) return;
+    final gemini = GeminiService(apiKey: groqKey);
+
+    final parsed = await gemini.parseFoodFromVoice(text);
+    if (parsed == null || parsed.isEmpty) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not understand. Try tapping a food item.')),
+        );
+      }
+      return;
+    }
+
+    // Match parsed names to food items and add them
+    int added = 0;
+    for (final item in parsed) {
+      final name = (item['name'] as String? ?? '').toLowerCase();
+      final qty = (item['quantity'] as num?)?.toDouble() ?? 1.0;
+      final match = vm.foodItems.where(
+        (f) => f.name.toLowerCase().contains(name) || name.contains(f.name.toLowerCase()),
+      );
+      if (match.isNotEmpty) {
+        await vm.addFood(match.first.id.toString(), qty);
+        added++;
+      }
+    }
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(added > 0 ? 'Added $added item${added > 1 ? "s" : ""}' : 'No matching foods found')),
+      );
+    }
   }
 
   void _addFood(String foodId, String name) {
@@ -175,7 +215,64 @@ class _NutritionScreenState extends State<NutritionScreen> {
                   ),
                 ),
 
-              // ── Macros (expandable) ──
+              // ── AI Food Advice ──
+              if (vm.isAiFoodLoading)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppTheme.accent.withValues(alpha: 0.06),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                        color: AppTheme.accent.withValues(alpha: 0.15)),
+                  ),
+                  child: const Row(
+                    children: [
+                      SizedBox(height: 16, width: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2)),
+                      SizedBox(width: 12),
+                      Text('Getting AI meal suggestions...',
+                          style: TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
+                    ],
+                  ),
+                )
+              else if (vm.aiFoodAdvice != null)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppTheme.accent.withValues(alpha: 0.06),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                        color: AppTheme.accent.withValues(alpha: 0.15)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.auto_awesome_rounded,
+                          size: 18, color: AppTheme.accent),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('${vm.mealTimeSuggestion} Ideas',
+                                style: const TextStyle(
+                                    fontSize: 13, fontWeight: FontWeight.w600)),
+                            const SizedBox(height: 4),
+                            Text(vm.aiFoodAdvice!,
+                                style: const TextStyle(
+                                    fontSize: 13,
+                                    color: AppTheme.textSecondary,
+                                    height: 1.5)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+              // ── Macros (expandable) ─��
               if (vm.summary != null)
                 ExpansionTile(
                   tilePadding: EdgeInsets.zero,
@@ -250,9 +347,21 @@ class _NutritionScreenState extends State<NutritionScreen> {
 
               const SizedBox(height: 16),
 
+              // ── Voice food logging ──
+              const VoiceListeningOverlay(),
+
               // ── Add food section ──
-              const Text('Add Food',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+              Row(
+                children: [
+                  const Text('Add Food',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                  const Spacer(),
+                  MicButton(
+                    size: 34,
+                    onResult: (text) => _handleVoiceFood(context, text),
+                  ),
+                ],
+              ),
               const SizedBox(height: 10),
 
               // Filter chips

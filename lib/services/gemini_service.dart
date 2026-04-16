@@ -225,6 +225,42 @@ Include Indian cuisine options. Keep under 100 words. Use bullet points.''';
     return _generate(system, user, maxTokens: 200);
   }
 
+  // ── Feature 6: Voice Food Parsing ──
+  Future<List<Map<String, dynamic>>?> parseFoodFromVoice(String text) async {
+    const system =
+        'Extract food items from spoken text. Return ONLY a JSON array. No explanation.';
+
+    final user = '''Text: "$text"
+
+Return ONLY a JSON array of food items mentioned:
+[{"name":"food name","quantity":1.0}]
+
+Examples:
+"2 eggs and rice" → [{"name":"Boiled Egg","quantity":2},{"name":"White Rice","quantity":1}]
+"had some dal and chapati" → [{"name":"Dal (Lentils)","quantity":1},{"name":"Chapati / Roti","quantity":1}]
+
+Match to these food names exactly: Boiled Egg, Grilled Chicken Breast, Paneer, Dal (Lentils), Greek Yogurt, White Rice, Chapati / Roti, Banana, Oats (cooked), Peanut Butter, Mixed Veg Curry, Chicken Curry, Egg Fried Rice, Idli (2 pcs), Dosa, Sprouts Salad, Green Salad, Clear Soup, Grilled Fish, Steamed Vegetables, Milk (1 glass), Apple, Almonds (handful), Curd / Yogurt, Poha''';
+
+    final response = await _generate(system, user, maxTokens: 200);
+    if (response == null) return null;
+
+    try {
+      var cleaned = response.trim();
+      if (cleaned.startsWith('```')) {
+        cleaned = cleaned.replaceFirst(RegExp(r'^```\w*\n?'), '');
+        cleaned = cleaned.replaceFirst(RegExp(r'\n?```$'), '');
+      }
+      final start = cleaned.indexOf('[');
+      final end = cleaned.lastIndexOf(']');
+      if (start == -1 || end == -1) return null;
+      cleaned = cleaned.substring(start, end + 1);
+      final list = jsonDecode(cleaned) as List;
+      return list.cast<Map<String, dynamic>>();
+    } catch (_) {
+      return null;
+    }
+  }
+
   String _topCause(Map<String, double> causes) =>
       causes.entries.reduce((a, b) => a.value > b.value ? a : b).key;
 }

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../services/gemini_service.dart';
 import '../utils/constants.dart';
+import '../widgets/mic_button.dart';
 import '../viewmodels/checkin_viewmodel.dart';
 import '../widgets/burnout_gauge.dart';
 import 'result_screen.dart';
@@ -48,16 +49,36 @@ void _showNLSheet(BuildContext context, CheckInViewModel vm) {
               ],
             ),
             const SizedBox(height: 12),
-            TextField(
-              controller: controller,
-              maxLines: 3,
-              autofocus: true,
-              decoration: const InputDecoration(
-                hintText:
-                    'e.g. "Slept 5 hours, worked all day, feeling terrible, too much coffee"',
-                hintStyle: TextStyle(fontSize: 13),
-              ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: controller,
+                    maxLines: 3,
+                    autofocus: true,
+                    decoration: const InputDecoration(
+                      hintText:
+                          'e.g. "Slept 5 hours, worked all day, feeling terrible"',
+                      hintStyle: TextStyle(fontSize: 13),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                MicButton(
+                  size: 42,
+                  onResult: (text) {
+                    final current = controller.text;
+                    controller.text = current.isEmpty
+                        ? text
+                        : '$current $text';
+                    controller.selection = TextSelection.collapsed(
+                        offset: controller.text.length);
+                  },
+                ),
+              ],
             ),
+            const VoiceListeningOverlay(),
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
@@ -227,7 +248,7 @@ class CheckInScreen extends StatelessWidget {
                   duration: const Duration(milliseconds: 200),
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   decoration: BoxDecoration(
-                    color: vm.exercised ? AppTheme.riskLow.withValues(alpha: 0.15) : AppTheme.surfaceLight,
+                    color: vm.exercised ? AppTheme.riskLow.withValues(alpha: 0.15) : AppTheme.sl(context),
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
                       color: vm.exercised ? AppTheme.riskLow : Colors.transparent,

@@ -4,8 +4,10 @@ import '../data/nutrition_repository.dart';
 import '../models/food_item.dart';
 import '../models/nutrition_log.dart';
 import '../models/nutrition_summary.dart';
+import '../models/user_profile.dart';
 import '../services/auth_service.dart';
 import '../services/food_recommendation_service.dart';
+import '../services/gemini_service.dart';
 import '../services/nutrition_service.dart';
 
 class NutritionViewModel extends ChangeNotifier {
@@ -16,20 +18,28 @@ class NutritionViewModel extends ChangeNotifier {
   bool isLoading = false;
   String? errorMessage;
 
+  // ── AI Food Advice ──
+  String? aiFoodAdvice;
+  bool isAiFoodLoading = false;
+  UserProfile? userProfile;
+
   final AuthService _authService;
   final NutritionService _nutritionService;
   final FoodRecommendationService _foodRecommendationService;
   final NutritionRepository _repository;
+  final GeminiService? _geminiService;
 
   NutritionViewModel({
     required AuthService authService,
     required NutritionService nutritionService,
     required FoodRecommendationService foodRecommendationService,
     required NutritionRepository repository,
+    GeminiService? geminiService,
   })  : _authService = authService,
         _nutritionService = nutritionService,
         _foodRecommendationService = foodRecommendationService,
-        _repository = repository;
+        _repository = repository,
+        _geminiService = geminiService;
 
   /// Load food items and today's logs.
   Future<void> loadToday() async {
@@ -158,5 +168,28 @@ class NutritionViewModel extends ChangeNotifier {
       recommendations =
           _foodRecommendationService.recommend(summary!, foodItems);
     }
+    // Fetch AI food advice async (non-blocking)
+    _fetchAiFoodAdvice();
+  }
+
+  Future<void> _fetchAiFoodAdvice() async {
+    if (_geminiService == null || !_geminiService.isAvailable) return;
+    if (summary == null) return;
+
+    isAiFoodLoading = true;
+    notifyListeners();
+
+    try {
+      aiFoodAdvice = await _geminiService.generateFoodAdvice(
+        summary: summary!,
+        mealTime: mealTimeSuggestion,
+        profile: userProfile,
+      );
+    } catch (_) {
+      aiFoodAdvice = null; // fallback to rule-based
+    }
+
+    isAiFoodLoading = false;
+    notifyListeners();
   }
 }

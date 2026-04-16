@@ -4,76 +4,60 @@ import '../theme/app_theme.dart';
 
 class SuggestionTile extends StatelessWidget {
   final Suggestion suggestion;
-
   const SuggestionTile({super.key, required this.suggestion});
 
   IconData get _icon {
     switch (suggestion.category) {
-      case 'sleep':
-        return Icons.bedtime_rounded;
-      case 'work':
-        return Icons.work_rounded;
-      case 'mood':
-        return Icons.mood_rounded;
-      case 'screen_time':
-        return Icons.phone_android_rounded;
-      case 'caffeine':
-        return Icons.coffee_rounded;
-      default:
-        return Icons.lightbulb_rounded;
+      case 'sleep': return Icons.bedtime_rounded;
+      case 'work': return Icons.work_rounded;
+      case 'mood': return Icons.mood_rounded;
+      case 'screen_time': return Icons.phone_android_rounded;
+      case 'caffeine': return Icons.coffee_rounded;
+      case 'exercise': return Icons.fitness_center_rounded;
+      default: return Icons.lightbulb_rounded;
     }
   }
 
-  Color get _priorityColor {
+  Color get _color {
     switch (suggestion.priority) {
-      case 'high':
-        return AppTheme.riskCritical;
-      case 'medium':
-        return AppTheme.riskModerate;
-      default:
-        return AppTheme.riskLow;
+      case 'high': return AppTheme.riskCritical;
+      case 'medium': return AppTheme.riskModerate;
+      default: return AppTheme.riskLow;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: _priorityColor.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(_icon, color: _priorityColor, size: 22),
+      padding: const EdgeInsets.all(14),
+      decoration: AppTheme.glassCard(context),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: _color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
             ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    suggestion.text,
-                    style: const TextStyle(fontSize: 14, height: 1.4),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '-${suggestion.expectedReduction.round()} pts',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppTheme.riskLow,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
+            child: Icon(_icon, color: _color, size: 20),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(suggestion.text,
+                    style: TextStyle(fontSize: 13, height: 1.4,
+                        color: AppTheme.tp(context))),
+                const SizedBox(height: 4),
+                Text('-${suggestion.expectedReduction.round()} pts',
+                    style: TextStyle(fontSize: 12, color: AppTheme.mintAccent,
+                        fontWeight: FontWeight.w600)),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../viewmodels/chat_viewmodel.dart';
 import '../viewmodels/checkin_viewmodel.dart';
+import '../widgets/mic_button.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -139,7 +140,13 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
           ),
 
-          // ── Input ──
+          // ── Voice listening overlay ──
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: VoiceListeningOverlay(),
+          ),
+
+          // ── Input ��─
           Container(
             padding: const EdgeInsets.fromLTRB(16, 8, 8, 16),
             decoration: const BoxDecoration(
@@ -163,6 +170,18 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                     ),
                   ),
+                  MicButton(
+                    size: 36,
+                    onResult: (text) {
+                      final current = _controller.text;
+                      _controller.text = current.isEmpty
+                          ? text
+                          : '$current $text';
+                      _controller.selection = TextSelection.collapsed(
+                          offset: _controller.text.length);
+                    },
+                  ),
+                  const SizedBox(width: 4),
                   IconButton(
                     onPressed: vm.isTyping ? null : _send,
                     icon: const Icon(Icons.send_rounded),
