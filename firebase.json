@@ -1,0 +1,25 @@
+{
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "focusguard-ai-eb6e2",
+          "appId": "1:379452324930:android:c0ae252416361a312f01db",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "focusguard-ai-eb6e2",
+          "configurations": {
+            "android": "1:379452324930:android:c0ae252416361a312f01db"
+          }
+        }
+      }
+    }
+  }
+}

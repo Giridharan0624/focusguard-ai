@@ -1,0 +1,26 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // User profiles: only the owner can read/write
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+
+      // Check-ins subcollection
+      match /check_ins/{date} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+
+      // Nutrition logs subcollection
+      match /nutrition_logs/{logId} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+    }
+
+    // Food items: read-only for authenticated users
+    match /food_items/{itemId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+  }
+}
