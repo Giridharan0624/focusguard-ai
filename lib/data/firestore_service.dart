@@ -19,6 +19,10 @@ class FirestoreService {
   CollectionReference nutritionLogs(String uid) =>
       userDoc(uid).collection('nutrition_logs');
 
+  // ── AI cache ──
+  CollectionReference aiCache(String uid) =>
+      userDoc(uid).collection('ai_cache');
+
   // ── Shared top-level collection ──
   CollectionReference get foodItems => _db.collection('food_items');
 

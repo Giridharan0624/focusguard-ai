@@ -11,6 +11,7 @@ import 'data/user_repository.dart';
 import 'services/auth_service.dart';
 import 'services/burnout_calculator.dart';
 import 'services/cause_analyzer.dart';
+import 'services/gemini_service.dart';
 import 'services/prediction_service.dart';
 import 'services/recommendation_service.dart';
 import 'services/simulation_service.dart';
@@ -18,6 +19,7 @@ import 'services/nutrition_service.dart';
 import 'services/food_recommendation_service.dart';
 import 'viewmodels/auth_viewmodel.dart';
 import 'viewmodels/checkin_viewmodel.dart';
+import 'viewmodels/chat_viewmodel.dart';
 import 'viewmodels/nutrition_viewmodel.dart';
 import 'viewmodels/history_viewmodel.dart';
 
@@ -29,8 +31,6 @@ void main() async {
 
   // ── Data layer ──
   final firestoreService = FirestoreService();
-
-  // Seed food items in background — don't block app startup
   firestoreService.seedFoodItemsIfNeeded().catchError((_) {});
 
   final userRepo = UserRepository(firestoreService);
@@ -46,6 +46,11 @@ void main() async {
   final simulationService = SimulationService(calculator);
   final nutritionService = NutritionService();
   final foodRecommendationService = FoodRecommendationService();
+
+  // ── AI Service ──
+  const geminiKey = String.fromEnvironment('GEMINI_API_KEY');
+  final geminiService =
+      geminiKey.isNotEmpty ? GeminiService(apiKey: geminiKey) : null;
 
   runApp(
     MultiProvider(
@@ -65,6 +70,7 @@ void main() async {
             recommendationService: recommendationService,
             simulationService: simulationService,
             repository: checkinRepo,
+            geminiService: geminiService,
           ),
         ),
         ChangeNotifierProvider(
@@ -81,6 +87,14 @@ void main() async {
             repository: checkinRepo,
           ),
         ),
+        if (geminiService != null)
+          ChangeNotifierProvider(
+            create: (_) => ChatViewModel(
+              geminiService: geminiService,
+              authService: authService,
+              repository: checkinRepo,
+            ),
+          ),
       ],
       child: const FocusGuardApp(),
     ),

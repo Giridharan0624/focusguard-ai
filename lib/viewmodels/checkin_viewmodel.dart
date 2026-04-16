@@ -1,10 +1,13 @@
 import 'package:flutter/foundation.dart';
 import '../data/checkin_repository.dart';
 import '../models/burnout_result.dart';
+import '../models/suggestion.dart';
 import '../models/user_input.dart';
+import '../models/user_profile.dart';
 import '../services/auth_service.dart';
 import '../services/burnout_calculator.dart';
 import '../services/cause_analyzer.dart';
+import '../services/gemini_service.dart';
 import '../services/prediction_service.dart';
 import '../services/recommendation_service.dart';
 import '../services/simulation_service.dart';
@@ -42,6 +45,14 @@ class CheckInViewModel extends ChangeNotifier {
   bool isLoading = false;
   String? errorMessage;
 
+  // ── AI state ──
+  String? aiInsight;
+  List<Suggestion>? aiSuggestions;
+  bool isAiLoading = false;
+  UserProfile? _userProfile;
+
+  void setUserProfile(UserProfile? p) => _userProfile = p;
+
   // ── Dependencies ──
   final AuthService _authService;
   final BurnoutCalculator _calculator;
@@ -50,6 +61,7 @@ class CheckInViewModel extends ChangeNotifier {
   final RecommendationService _recommendationService;
   final SimulationService _simulationService;
   final CheckInRepository _repository;
+  final GeminiService? _geminiService;
 
   CheckInViewModel({
     required AuthService authService,
@@ -59,13 +71,15 @@ class CheckInViewModel extends ChangeNotifier {
     required RecommendationService recommendationService,
     required SimulationService simulationService,
     required CheckInRepository repository,
+    GeminiService? geminiService,
   })  : _authService = authService,
         _calculator = calculator,
         _causeAnalyzer = causeAnalyzer,
         _predictionService = predictionService,
         _recommendationService = recommendationService,
         _simulationService = simulationService,
-        _repository = repository;
+        _repository = repository,
+        _geminiService = geminiService;
 
   // ── Live score preview (pure computation, no side effects) ──
   double get liveScore {
@@ -166,9 +180,55 @@ class CheckInViewModel extends ChangeNotifier {
 
     isLoading = false;
     notifyListeners();
+
+    // Fire-and-forget AI enhancement (non-blocking)
+    if (result != null && _geminiService != null) {
+      _fetchAiContent(result!);
+    }
+  }
+
+  Future<void> _fetchAiContent(BurnoutResult res) async {
+    isAiLoading = true;
+    notifyListeners();
+
+    try {
+      final input = _buildInput();
+      final uid = _authService.uid;
+      final history = await _repository.getRecentScores(uid, kHistoryLookback);
+
+      // Fetch insight and recovery plan in parallel
+      final results = await Future.wait([
+        _geminiService!.generateInsight(
+          input: input,
+          burnoutScore: res.score,
+          causes: res.causes,
+          recentScores: history,
+          profile: _userProfile,
+          exercised: _exercised,
+        ),
+        _geminiService.generateRecoveryPlan(
+          input: input,
+          burnoutScore: res.score,
+          causes: res.causes,
+          profile: _userProfile,
+          exercised: _exercised,
+        ),
+      ]);
+
+      aiInsight = results[0] as String?;
+      final suggList = results[1];
+      aiSuggestions = suggList is List<Suggestion> ? suggList : null;
+    } catch (_) {
+      // Silently fall back — rule-based results already shown
+    }
+
+    isAiLoading = false;
+    notifyListeners();
   }
 
   // ── Helpers ──
+  UserInput buildCurrentInput() => _buildInput();
+
   UserInput _buildInput() => UserInput(
         date: DateTime.now(),
         sleepHours: _sleepHours,

@@ -2,12 +2,125 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
+import '../services/gemini_service.dart';
 import '../utils/constants.dart';
 import '../viewmodels/checkin_viewmodel.dart';
 import '../widgets/burnout_gauge.dart';
 import 'result_screen.dart';
 
 const _moodEmojis = ['😫', '😟', '😐', '🙂', '😄'];
+
+const _groqApiKey = String.fromEnvironment('GROQ_API_KEY');
+
+void _showNLSheet(BuildContext context, CheckInViewModel vm) {
+  final controller = TextEditingController();
+  bool isLoading = false;
+  final gemini = GeminiService(apiKey: _groqApiKey);
+
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: AppTheme.surface,
+    isScrollControlled: true,
+    shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setState) => Padding(
+        padding: EdgeInsets.fromLTRB(
+            24, 20, 24, MediaQuery.of(ctx).viewInsets.bottom + 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                    color: AppTheme.textHint,
+                    borderRadius: BorderRadius.circular(2))),
+            const SizedBox(height: 16),
+            const Row(
+              children: [
+                Icon(Icons.auto_awesome_rounded,
+                    size: 20, color: AppTheme.primary),
+                SizedBox(width: 8),
+                Text('Describe your day',
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              maxLines: 3,
+              autofocus: true,
+              decoration: const InputDecoration(
+                hintText:
+                    'e.g. "Slept 5 hours, worked all day, feeling terrible, too much coffee"',
+                hintStyle: TextStyle(fontSize: 13),
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: isLoading
+                    ? null
+                    : () async {
+                        if (controller.text.trim().isEmpty) return;
+                        setState(() => isLoading = true);
+
+                        try {
+                          final parsed = await gemini
+                              .extractCheckinFromText(controller.text);
+
+                          if (parsed != null) {
+                            if (parsed['sleepHours'] != null) {
+                              vm.sleepHours =
+                                  (parsed['sleepHours'] as num).toDouble();
+                            }
+                            if (parsed['workHours'] != null) {
+                              vm.workHours =
+                                  (parsed['workHours'] as num).toDouble();
+                            }
+                            if (parsed['mood'] != null) {
+                              vm.mood = (parsed['mood'] as num).toInt();
+                            }
+                            if (parsed['screenTime'] != null) {
+                              vm.screenTime =
+                                  (parsed['screenTime'] as num).toDouble();
+                            }
+                            if (parsed['caffeine'] != null) {
+                              vm.caffeine =
+                                  (parsed['caffeine'] as num).toInt();
+                            }
+                            if (ctx.mounted) Navigator.pop(ctx);
+                          } else {
+                            setState(() => isLoading = false);
+                            if (ctx.mounted) {
+                              ScaffoldMessenger.of(ctx).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        'Could not understand. Try the sliders.')),
+                              );
+                            }
+                          }
+                        } catch (_) {
+                          setState(() => isLoading = false);
+                        }
+                      },
+                child: isLoading
+                    ? const SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Text('Extract & Fill'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
 
 class CheckInScreen extends StatelessWidget {
   const CheckInScreen({super.key});
@@ -22,9 +135,16 @@ class CheckInScreen extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
           child: Column(
             children: [
-              // ── Live score (compact) ──
+              // ── NL Check-In + Live score ──
               BurnoutGauge(score: vm.liveScore, size: 110, animate: false),
-              const SizedBox(height: 20),
+              const SizedBox(height: 10),
+              TextButton.icon(
+                onPressed: () => _showNLSheet(context, vm),
+                icon: const Icon(Icons.auto_awesome_rounded, size: 16),
+                label: const Text('Or describe your day',
+                    style: TextStyle(fontSize: 13)),
+              ),
+              const SizedBox(height: 10),
 
               // ── Mood emoji row ──
               Card(

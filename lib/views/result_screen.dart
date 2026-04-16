@@ -12,7 +12,8 @@ class ResultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final result = context.watch<CheckInViewModel>().result;
+    final checkinVM = context.watch<CheckInViewModel>();
+    final result = checkinVM.result;
     if (result == null) {
       return const Scaffold(body: Center(child: Text('No results yet')));
     }
@@ -31,6 +32,49 @@ class ResultScreen extends StatelessWidget {
             BurnoutGauge(score: result.score, size: 180),
             const SizedBox(height: 20),
 
+            // ── AI Insight ──
+            if (checkinVM.isAiLoading)
+              const Padding(
+                padding: EdgeInsets.only(bottom: 16),
+                child: Center(
+                  child: SizedBox(
+                      height: 16,
+                      width: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2)),
+                ),
+              )
+            else if (checkinVM.aiInsight != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 20),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                        color: AppTheme.primary.withValues(alpha: 0.2)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.auto_awesome_rounded,
+                          size: 18, color: AppTheme.primary),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          checkinVM.aiInsight!,
+                          style: const TextStyle(
+                              fontSize: 13,
+                              color: AppTheme.textSecondary,
+                              height: 1.5),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
             // ── Causes ──
             _Section(
               title: "What's causing it",
@@ -44,16 +88,22 @@ class ResultScreen extends StatelessWidget {
                   todayScore: result.score, threeDay: result.threeDay),
             ),
 
-            // ── Suggestions ──
-            if (result.suggestions.isNotEmpty)
-              _Section(
-                title: 'Recovery Plan',
+            // ── Suggestions (AI or rule-based) ──
+            Builder(builder: (_) {
+              final suggestions =
+                  checkinVM.aiSuggestions ?? result.suggestions;
+              if (suggestions.isEmpty) return const SizedBox.shrink();
+              return _Section(
+                title: checkinVM.aiSuggestions != null
+                    ? 'AI Recovery Plan'
+                    : 'Recovery Plan',
                 child: Column(
-                  children: result.suggestions
+                  children: suggestions
                       .map((s) => SuggestionTile(suggestion: s))
                       .toList(),
                 ),
-              ),
+              );
+            }),
 
             // ── Simulation ──
             _Section(
