@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/foundation.dart';
+import '../data/firestore_service.dart';
 import '../data/nutrition_repository.dart';
 import '../models/food_item.dart';
 import '../models/nutrition_log.dart';
@@ -28,17 +29,20 @@ class NutritionViewModel extends ChangeNotifier {
   final FoodRecommendationService _foodRecommendationService;
   final NutritionRepository _repository;
   final GeminiService? _geminiService;
+  final FirestoreService _firestoreService;
 
   NutritionViewModel({
     required AuthService authService,
     required NutritionService nutritionService,
     required FoodRecommendationService foodRecommendationService,
     required NutritionRepository repository,
+    required FirestoreService firestoreService,
     GeminiService? geminiService,
   })  : _authService = authService,
         _nutritionService = nutritionService,
         _foodRecommendationService = foodRecommendationService,
         _repository = repository,
+        _firestoreService = firestoreService,
         _geminiService = geminiService;
 
   /// Load food items and today's logs.
@@ -48,6 +52,9 @@ class NutritionViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // Re-seed food items if outdated (user is now authenticated)
+      await _firestoreService.seedFoodItemsIfNeeded();
+
       final uid = _authService.uid;
       foodItems = await _repository.getAllFoodItems();
       todayLogs = await _repository.getTodayLogs(uid);

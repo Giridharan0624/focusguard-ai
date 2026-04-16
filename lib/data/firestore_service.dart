@@ -26,11 +26,32 @@ class FirestoreService {
   // ── Shared top-level collection ──
   CollectionReference get foodItems => _db.collection('food_items');
 
-  /// Seed preset food items if the collection is empty (first launch).
+  /// Seed preset food items. Re-seeds if data is outdated (missing unit field).
   Future<void> seedFoodItemsIfNeeded() async {
     final snapshot = await foodItems.limit(1).get();
-    if (snapshot.docs.isNotEmpty) return;
 
+    // Check if re-seed needed (old data missing 'unit' field)
+    bool needsReseed = snapshot.docs.isEmpty;
+    if (!needsReseed && snapshot.docs.isNotEmpty) {
+      final data = snapshot.docs.first.data() as Map<String, dynamic>?;
+      if (data != null && !data.containsKey('unit')) {
+        needsReseed = true;
+      }
+    }
+
+    if (!needsReseed) return;
+
+    // Delete old food items
+    if (snapshot.docs.isNotEmpty) {
+      final allDocs = await foodItems.get();
+      final deleteBatch = _db.batch();
+      for (final doc in allDocs.docs) {
+        deleteBatch.delete(doc.reference);
+      }
+      await deleteBatch.commit();
+    }
+
+    // Seed fresh
     final batch = _db.batch();
     for (final food in kPresetFoods) {
       final docRef = foodItems.doc(food.id.toString());

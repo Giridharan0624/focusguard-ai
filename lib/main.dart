@@ -81,6 +81,7 @@ void main() async {
             nutritionService: nutritionService,
             foodRecommendationService: foodRecommendationService,
             repository: nutritionRepo,
+            firestoreService: firestoreService,
             geminiService: geminiService,
           ),
         ),

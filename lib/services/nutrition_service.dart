@@ -16,10 +16,15 @@ class NutritionService {
     for (final log in logs) {
       final food = foodMap[log.foodItemId];
       if (food == null) continue;
-      totalProtein += food.protein * log.quantity;
-      totalCalories += food.calories * log.quantity;
-      totalCarbs += food.carbs * log.quantity;
-      totalFat += food.fat * log.quantity;
+      // For nos: quantity is count (1 egg = 1 serving)
+      // For grams/ml: quantity is actual amount, divide by servingSize
+      final multiplier = food.unit == 'nos'
+          ? log.quantity
+          : log.quantity / food.servingSize;
+      totalProtein += food.protein * multiplier;
+      totalCalories += food.calories * multiplier;
+      totalCarbs += food.carbs * multiplier;
+      totalFat += food.fat * multiplier;
     }
 
     final deficits = {

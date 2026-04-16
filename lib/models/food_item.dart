@@ -8,6 +8,8 @@ class FoodItem {
   final double fat;
   final String category;
   final String icon;
+  final String unit;       // e.g. "piece", "cup", "glass", "bowl", "slice"
+  final double stepSize;   // increment per tap (0.5 for bowls, 1 for pieces)
 
   const FoodItem({
     required this.id,
@@ -19,6 +21,8 @@ class FoodItem {
     required this.fat,
     required this.category,
     required this.icon,
+    this.unit = 'serving',
+    this.stepSize = 1,
   });
 
   Map<String, dynamic> toMap() => {
@@ -31,6 +35,8 @@ class FoodItem {
         'fat': fat,
         'category': category,
         'icon': icon,
+        'unit': unit,
+        'step_size': stepSize,
       };
 
   factory FoodItem.fromMap(Map<String, dynamic> map) => FoodItem(
@@ -43,5 +49,7 @@ class FoodItem {
         fat: (map['fat'] as num).toDouble(),
         category: map['category'] as String,
         icon: map['icon'] as String,
+        unit: map['unit'] as String? ?? 'serving',
+        stepSize: (map['step_size'] as num?)?.toDouble() ?? 1,
       );
 }
