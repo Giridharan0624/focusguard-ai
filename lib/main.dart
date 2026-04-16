@@ -29,7 +29,9 @@ void main() async {
 
   // ── Data layer ──
   final firestoreService = FirestoreService();
-  await firestoreService.seedFoodItemsIfNeeded();
+
+  // Seed food items in background — don't block app startup
+  firestoreService.seedFoodItemsIfNeeded().catchError((_) {});
 
   final userRepo = UserRepository(firestoreService);
   final checkinRepo = CheckInRepository(firestoreService);

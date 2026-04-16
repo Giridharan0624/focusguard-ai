@@ -15,8 +15,8 @@ class SuggestionTile extends StatelessWidget {
         return Icons.work_rounded;
       case 'mood':
         return Icons.mood_rounded;
-      case 'meetings':
-        return Icons.groups_rounded;
+      case 'screen_time':
+        return Icons.phone_android_rounded;
       case 'caffeine':
         return Icons.coffee_rounded;
       default:

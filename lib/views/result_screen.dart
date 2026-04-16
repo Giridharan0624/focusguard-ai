@@ -14,119 +14,67 @@ class ResultScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final result = context.watch<CheckInViewModel>().result;
     if (result == null) {
-      return const Scaffold(
-        body: Center(child: Text('No results yet')),
-      );
+      return const Scaffold(body: Center(child: Text('No results yet')));
     }
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Your Results'),
+        title: const Text('Results'),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // ── Burnout gauge ──
-            BurnoutGauge(score: result.score, size: 220),
-            const SizedBox(height: 24),
+            // ── Gauge ──
+            BurnoutGauge(score: result.score, size: 180),
+            const SizedBox(height: 20),
 
-            // ── Cause Breakdown ──
-            _SectionHeader(title: 'What\'s causing it'),
-            const SizedBox(height: 12),
-            CauseChart(causes: result.causes),
-            const SizedBox(height: 28),
+            // ── Causes ──
+            _Section(
+              title: "What's causing it",
+              child: CauseChart(causes: result.causes),
+            ),
 
             // ── Prediction ──
-            _SectionHeader(title: '3-Day Prediction'),
-            const SizedBox(height: 12),
-            TrendChart(
-              todayScore: result.score,
-              threeDay: result.threeDay,
+            _Section(
+              title: '3-Day Prediction',
+              child: TrendChart(
+                  todayScore: result.score, threeDay: result.threeDay),
             ),
-            const SizedBox(height: 28),
 
-            // ── Recovery Plan ──
-            _SectionHeader(title: 'Recovery Plan'),
-            const SizedBox(height: 12),
-            if (result.suggestions.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 16),
-                child: Text(
-                  'Looking good! No urgent actions needed.',
-                  style: TextStyle(color: AppTheme.textSecondary),
-                ),
-              )
-            else
-              ...result.suggestions.map((s) => SuggestionTile(suggestion: s)),
-
-            const SizedBox(height: 28),
-
-            // ── Simulation ──
-            _SectionHeader(title: 'If You Fix It'),
-            const SizedBox(height: 12),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
+            // ── Suggestions ──
+            if (result.suggestions.isNotEmpty)
+              _Section(
+                title: 'Recovery Plan',
                 child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _ScoreColumn(
-                          label: 'Now',
-                          score: result.score,
-                          color: AppTheme.riskColor(result.riskLevel),
-                        ),
-                        const Icon(Icons.arrow_forward_rounded,
-                            color: AppTheme.textHint, size: 28),
-                        _ScoreColumn(
-                          label: 'After',
-                          score: result.simulatedScore,
-                          color: AppTheme.riskColor(
-                            CheckInViewModel.riskLevel(result.simulatedScore),
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (result.simulatedChanges.isNotEmpty) ...[
-                      const SizedBox(height: 16),
-                      const Divider(color: AppTheme.surfaceLight),
-                      const SizedBox(height: 8),
-                      ...result.simulatedChanges.entries.map((e) {
-                        final sign = e.value > 0 ? '+' : '';
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 2),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(e.key,
-                                  style: const TextStyle(
-                                      color: AppTheme.textSecondary,
-                                      fontSize: 13)),
-                              Text(
-                                '$sign${e.value.toStringAsFixed(1)}',
-                                style: TextStyle(
-                                  color: e.value > 0
-                                      ? AppTheme.riskLow
-                                      : AppTheme.riskCritical,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }),
-                    ],
-                  ],
+                  children: result.suggestions
+                      .map((s) => SuggestionTile(suggestion: s))
+                      .toList(),
                 ),
               ),
+
+            // ── Simulation ──
+            _Section(
+              title: 'If You Fix It',
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _ScoreColumn(
+                      label: 'Now',
+                      score: result.score,
+                      color: AppTheme.riskColor(result.riskLevel)),
+                  const Icon(Icons.arrow_forward_rounded,
+                      color: AppTheme.textHint),
+                  _ScoreColumn(
+                      label: 'After',
+                      score: result.simulatedScore,
+                      color: AppTheme.riskColor(
+                          CheckInViewModel.riskLevel(result.simulatedScore))),
+                ],
+              ),
             ),
-            const SizedBox(height: 32),
           ],
         ),
       ),
@@ -134,17 +82,24 @@ class ResultScreen extends StatelessWidget {
   }
 }
 
-class _SectionHeader extends StatelessWidget {
+class _Section extends StatelessWidget {
   final String title;
-  const _SectionHeader({required this.title});
+  final Widget child;
+
+  const _Section({required this.title, required this.child});
 
   @override
   Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Text(
-        title,
-        style: Theme.of(context).textTheme.titleLarge,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: const TextStyle(
+              fontSize: 16, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 12),
+          child,
+        ],
       ),
     );
   }
@@ -155,27 +110,18 @@ class _ScoreColumn extends StatelessWidget {
   final double score;
   final Color color;
 
-  const _ScoreColumn({
-    required this.label,
-    required this.score,
-    required this.color,
-  });
+  const _ScoreColumn(
+      {required this.label, required this.score, required this.color});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(
-          score.round().toString(),
-          style: TextStyle(
-            fontSize: 36,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
+        Text(score.round().toString(),
+            style: TextStyle(
+                fontSize: 36, fontWeight: FontWeight.bold, color: color)),
         Text(label,
-            style:
-                const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
+            style: const TextStyle(fontSize: 12, color: AppTheme.textHint)),
       ],
     );
   }

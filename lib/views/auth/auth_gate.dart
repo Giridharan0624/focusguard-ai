@@ -6,7 +6,6 @@ import '../home_screen.dart';
 import 'login_screen.dart';
 import 'profile_setup_screen.dart';
 
-/// Listens to Firebase Auth state and routes to the correct screen.
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 
@@ -28,23 +27,59 @@ class AuthGate extends StatelessWidget {
           return const LoginScreen();
         }
 
-        // User is logged in — check if profile exists
-        return FutureBuilder<bool>(
-          future: authVM.hasProfile(),
-          builder: (context, profileSnap) {
-            if (profileSnap.connectionState == ConnectionState.waiting) {
-              return const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
-              );
-            }
+        // If profile is loaded, go to home
+        if (authVM.userProfile != null) {
+          return const HomeScreen();
+        }
 
-            if (profileSnap.data == true) {
-              return const HomeScreen();
-            }
+        // Otherwise check Firestore
+        return _ProfileCheck(authVM: authVM);
+      },
+    );
+  }
+}
 
-            return const ProfileSetupScreen();
-          },
-        );
+class _ProfileCheck extends StatefulWidget {
+  final AuthViewModel authVM;
+  const _ProfileCheck({required this.authVM});
+
+  @override
+  State<_ProfileCheck> createState() => _ProfileCheckState();
+}
+
+class _ProfileCheckState extends State<_ProfileCheck> {
+  late Future<bool> _profileFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _profileFuture = _checkAndLoad();
+  }
+
+  Future<bool> _checkAndLoad() async {
+    final exists = await widget.authVM.hasProfile();
+    if (exists) {
+      await widget.authVM.loadProfile();
+    }
+    return exists;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<bool>(
+      future: _profileFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (snapshot.data == true) {
+          return const HomeScreen();
+        }
+
+        return const ProfileSetupScreen();
       },
     );
   }

@@ -12,7 +12,7 @@ void main() {
       sleepHours: 8,
       workHours: 0,
       mood: 10,
-      meetings: 0,
+      screenTime: 0,
       caffeine: 0,
     );
     expect(calculator.calculate(input), 0);
@@ -24,7 +24,7 @@ void main() {
       sleepHours: 0,
       workHours: 16,
       mood: 1,
-      meetings: 10,
+      screenTime: 16,
       caffeine: 10,
     );
     expect(calculator.calculate(input), 100);
@@ -36,7 +36,7 @@ void main() {
       sleepHours: 7,
       workHours: 8,
       mood: 5,
-      meetings: 2,
+      screenTime: 4,
       caffeine: 2,
     );
     final score = calculator.calculate(input);

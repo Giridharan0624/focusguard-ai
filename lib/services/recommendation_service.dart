@@ -64,19 +64,26 @@ class RecommendationService {
       ));
     }
 
-    // ── Meetings ──
-    if (input.meetings > 8) {
+    // ── Screen Time ──
+    if (input.screenTime > 12) {
       suggestions.add(const Suggestion(
-        category: 'meetings',
-        text: 'Meeting overload. Block focus time on your calendar.',
+        category: 'screen_time',
+        text: 'Extreme screen time. Take a 20-min break away from all screens.',
+        expectedReduction: 8,
+        priority: 'high',
+      ));
+    } else if (input.screenTime > 8) {
+      suggestions.add(const Suggestion(
+        category: 'screen_time',
+        text: 'High screen time. Follow the 20-20-20 rule: every 20 min, look 20 feet away for 20 sec.',
         expectedReduction: 5,
         priority: 'medium',
       ));
-    } else if (input.meetings > 5) {
+    } else if (input.screenTime > 6) {
       suggestions.add(const Suggestion(
-        category: 'meetings',
-        text: 'Decline or reschedule non-essential meetings.',
-        expectedReduction: 4,
+        category: 'screen_time',
+        text: 'Take short breaks between screen sessions to reduce eye strain.',
+        expectedReduction: 3,
         priority: 'low',
       ));
     }

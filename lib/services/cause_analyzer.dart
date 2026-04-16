@@ -23,7 +23,7 @@ class CauseAnalyzer {
         'Sleep': 20.0,
         'Work': 20.0,
         'Mood': 20.0,
-        'Meetings': 20.0,
+        'Screen Time': 20.0,
         'Caffeine': 20.0,
       };
 }

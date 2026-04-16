@@ -14,7 +14,7 @@ class SimulationService {
       sleepHours: max(input.sleepHours, kSimTargetSleep),
       workHours: min(input.workHours, kSimTargetWork),
       mood: min(input.mood + kSimMoodBoost, kMaxMood),
-      meetings: (input.meetings * kSimMeetingReduction).round(),
+      screenTime: min(input.screenTime, kSimTargetScreenTime),
       caffeine: min(input.caffeine, kSimTargetCaffeine),
     );
 
@@ -31,8 +31,8 @@ class SimulationService {
     if (improved.mood != input.mood) {
       changes['Mood'] = (improved.mood - input.mood).toDouble();
     }
-    if (improved.meetings != input.meetings) {
-      changes['Meetings'] = (improved.meetings - input.meetings).toDouble();
+    if (improved.screenTime != input.screenTime) {
+      changes['Screen Time'] = improved.screenTime - input.screenTime;
     }
     if (improved.caffeine != input.caffeine) {
       changes['Caffeine'] = (improved.caffeine - input.caffeine).toDouble();

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'theme/app_theme.dart';
-import 'views/auth/auth_gate.dart';
+import 'views/splash_screen.dart';
 
 class FocusGuardApp extends StatelessWidget {
   const FocusGuardApp({super.key});
@@ -11,7 +11,7 @@ class FocusGuardApp extends StatelessWidget {
       title: 'FocusGuard AI',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
-      home: const AuthGate(),
+      home: const SplashScreen(),
     );
   }
 }

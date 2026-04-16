@@ -12,8 +12,8 @@ class Validators {
   static int clampMood(int value) =>
       value.clamp(kMinMood, kMaxMood);
 
-  static int clampMeetings(int value) =>
-      value.clamp(kMinMeetings, kMaxMeetingsInput);
+  static double clampScreenTime(double value) =>
+      value.clamp(kMinScreenTime, kMaxScreenTimeInput);
 
   static int clampCaffeine(int value) =>
       value.clamp(kMinCaffeine, kMaxCaffeineInput);
@@ -40,11 +40,11 @@ class Validators {
     return null;
   }
 
-  static String? validateMeetings(String? value) {
+  static String? validateScreenTime(String? value) {
     if (value == null || value.isEmpty) return 'Required';
-    final v = int.tryParse(value);
-    if (v == null) return 'Enter a whole number';
-    if (v < kMinMeetings || v > kMaxMeetingsInput) return '$kMinMeetings-$kMaxMeetingsInput';
+    final v = double.tryParse(value);
+    if (v == null) return 'Enter a valid number';
+    if (v < kMinScreenTime || v > kMaxScreenTimeInput) return '${kMinScreenTime.toInt()}-${kMaxScreenTimeInput.toInt()} hours';
     return null;
   }
 

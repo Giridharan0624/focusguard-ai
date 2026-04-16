@@ -15,8 +15,9 @@ class CheckInViewModel extends ChangeNotifier {
   double _sleepHours = kDefaultSleep;
   double _workHours = kDefaultWorkHours;
   int _mood = kDefaultMood;
-  int _meetings = kDefaultMeetings;
+  double _screenTime = kDefaultScreenTime;
   int _caffeine = kDefaultCaffeine;
+  bool _exercised = false;
 
   double get sleepHours => _sleepHours;
   set sleepHours(double v) { _sleepHours = v; notifyListeners(); }
@@ -27,11 +28,14 @@ class CheckInViewModel extends ChangeNotifier {
   int get mood => _mood;
   set mood(int v) { _mood = v; notifyListeners(); }
 
-  int get meetings => _meetings;
-  set meetings(int v) { _meetings = v; notifyListeners(); }
+  double get screenTime => _screenTime;
+  set screenTime(double v) { _screenTime = v; notifyListeners(); }
 
   int get caffeine => _caffeine;
   set caffeine(int v) { _caffeine = v; notifyListeners(); }
+
+  bool get exercised => _exercised;
+  set exercised(bool v) { _exercised = v; notifyListeners(); }
 
   // ── Result state ──
   BurnoutResult? result;
@@ -63,12 +67,46 @@ class CheckInViewModel extends ChangeNotifier {
         _simulationService = simulationService,
         _repository = repository;
 
+  // ── Live score preview (pure computation, no side effects) ──
+  double get liveScore {
+    final input = UserInput(
+      date: DateTime.now(),
+      sleepHours: _sleepHours,
+      workHours: _workHours,
+      mood: _mood,
+      screenTime: _screenTime,
+      caffeine: _caffeine,
+    );
+    var score = _calculator.calculate(input);
+    if (_exercised) score = (score - 5).clamp(0, 100);
+    return score;
+  }
+
+  // ── Presets ──
+  void loadPreset(String preset) {
+    switch (preset) {
+      case 'student':
+        _sleepHours = 6; _workHours = 10; _mood = 5;
+        _screenTime = 10; _caffeine = 3;
+        break;
+      case 'work':
+        _sleepHours = 7; _workHours = 9; _mood = 6;
+        _screenTime = 7; _caffeine = 3;
+        break;
+      case 'rest':
+        _sleepHours = 9; _workHours = 1; _mood = 8;
+        _screenTime = 3; _caffeine = 1; _exercised = true;
+        break;
+    }
+    notifyListeners();
+  }
+
   // ── Demo ──
   void loadDemoData() {
     _sleepHours = kDemoSleep;
     _workHours = kDemoWork;
     _mood = kDemoMood;
-    _meetings = kDemoMeetings;
+    _screenTime = kDemoScreenTime;
     _caffeine = kDemoCaffeine;
     notifyListeners();
   }
@@ -77,8 +115,9 @@ class CheckInViewModel extends ChangeNotifier {
     _sleepHours = kDefaultSleep;
     _workHours = kDefaultWorkHours;
     _mood = kDefaultMood;
-    _meetings = kDefaultMeetings;
+    _screenTime = kDefaultScreenTime;
     _caffeine = kDefaultCaffeine;
+    _exercised = false;
     result = null;
     errorMessage = null;
     notifyListeners();
@@ -92,17 +131,11 @@ class CheckInViewModel extends ChangeNotifier {
 
     try {
       final uid = _authService.uid;
+      final input = _buildInput();
 
-      final input = UserInput(
-        date: DateTime.now(),
-        sleepHours: sleepHours,
-        workHours: workHours,
-        mood: mood,
-        meetings: meetings,
-        caffeine: caffeine,
-      );
+      var score = _calculator.calculate(input);
+      if (_exercised) score = (score - 5).clamp(0, 100);
 
-      final score = _calculator.calculate(input);
       final causes = _causeAnalyzer.analyze(input, score);
       final history =
           await _repository.getRecentScores(uid, kHistoryLookback);
@@ -136,6 +169,15 @@ class CheckInViewModel extends ChangeNotifier {
   }
 
   // ── Helpers ──
+  UserInput _buildInput() => UserInput(
+        date: DateTime.now(),
+        sleepHours: _sleepHours,
+        workHours: _workHours,
+        mood: _mood,
+        screenTime: _screenTime,
+        caffeine: _caffeine,
+      );
+
   static String riskLevel(double score) {
     if (score <= kRiskLowMax) return kRiskLow;
     if (score <= kRiskModerateMax) return kRiskModerate;
@@ -166,7 +208,7 @@ class CheckInViewModel extends ChangeNotifier {
       'Sleep': 'Sleep deficit is your biggest burnout driver today.',
       'Work': 'Long work hours are pushing your burnout risk up.',
       'Mood': 'Low mood is a major factor in your burnout score.',
-      'Meetings': 'Too many meetings are draining your energy.',
+      'Screen Time': 'Too much screen time is straining your energy.',
       'Caffeine':
           "High caffeine intake suggests you're compensating for fatigue.",
     };

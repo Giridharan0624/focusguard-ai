@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../viewmodels/nutrition_viewmodel.dart';
-import '../widgets/food_grid_item.dart';
+import '../widgets/calorie_ring.dart';
+import '../widgets/macro_donut.dart';
 import '../widgets/nutrition_progress_bar.dart';
 
 class NutritionScreen extends StatefulWidget {
@@ -13,56 +15,66 @@ class NutritionScreen extends StatefulWidget {
 }
 
 class _NutritionScreenState extends State<NutritionScreen> {
+  String _filter = 'all';
+
   @override
   void initState() {
     super.initState();
     final vm = context.read<NutritionViewModel>();
-    Future.microtask(() {
-      if (mounted) vm.loadToday();
-    });
+    Future.microtask(() { if (mounted) vm.loadToday(); });
   }
 
-  void _showAddDialog(BuildContext context, String foodId, String foodName) {
+  void _addFood(String foodId, String name) {
     double qty = 1;
-    showDialog(
+    showModalBottomSheet(
       context: context,
+      backgroundColor: AppTheme.surface,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          backgroundColor: AppTheme.surface,
-          title: Text(foodName),
-          content: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+        builder: (ctx, set) => Padding(
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              IconButton(
-                onPressed: qty > 0.5
-                    ? () => setDialogState(() => qty -= 0.5)
-                    : null,
-                icon: const Icon(Icons.remove_circle_outline),
+              Container(width: 40, height: 4,
+                  decoration: BoxDecoration(
+                      color: AppTheme.textHint,
+                      borderRadius: BorderRadius.circular(2))),
+              const SizedBox(height: 16),
+              Text(name, style: const TextStyle(
+                  fontSize: 18, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    onPressed: qty > 0.5 ? () => set(() => qty -= 0.5) : null,
+                    icon: const Icon(Icons.remove_circle_outline, size: 28)),
+                  const SizedBox(width: 16),
+                  Text(qty.toStringAsFixed(1),
+                      style: const TextStyle(
+                          fontSize: 28, fontWeight: FontWeight.bold)),
+                  const SizedBox(width: 16),
+                  IconButton(
+                    onPressed: () => set(() => qty += 0.5),
+                    icon: const Icon(Icons.add_circle_outline, size: 28)),
+                ],
               ),
-              Text(
-                qty.toStringAsFixed(1),
-                style:
-                    const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              IconButton(
-                onPressed: () => setDialogState(() => qty += 0.5),
-                icon: const Icon(Icons.add_circle_outline),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    HapticFeedback.lightImpact();
+                    context.read<NutritionViewModel>().addFood(foodId, qty);
+                    Navigator.pop(ctx);
+                  },
+                  child: const Text('Add'),
+                ),
               ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                context.read<NutritionViewModel>().addFood(foodId, qty);
-                Navigator.pop(ctx);
-              },
-              child: const Text('Add'),
-            ),
-          ],
         ),
       ),
     );
@@ -72,178 +84,270 @@ class _NutritionScreenState extends State<NutritionScreen> {
   Widget build(BuildContext context) {
     final vm = context.watch<NutritionViewModel>();
 
+    if (vm.isLoading && vm.foodItems.isEmpty) {
+      return const Scaffold(
+          body: Center(child: CircularProgressIndicator()));
+    }
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Nutrition'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
-      body: vm.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ── Daily summary ──
-                  if (vm.summary != null) ...[
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Today\'s Nutrition',
-                                style:
-                                    Theme.of(context).textTheme.titleLarge),
-                            const SizedBox(height: 12),
-                            NutritionProgressBar(
-                              label: 'Protein',
-                              current: vm.summary!.totalProtein,
-                              goal: vm.summary!.proteinGoal,
-                            ),
-                            NutritionProgressBar(
-                              label: 'Calories',
-                              current: vm.summary!.totalCalories,
-                              goal: vm.summary!.calorieGoal,
-                              unit: 'kcal',
-                            ),
-                            NutritionProgressBar(
-                              label: 'Carbs',
-                              current: vm.summary!.totalCarbs,
-                              goal: vm.summary!.carbGoal,
-                            ),
-                            NutritionProgressBar(
-                              label: 'Fat',
-                              current: vm.summary!.totalFat,
-                              goal: vm.summary!.fatGoal,
-                            ),
-                          ],
-                        ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Header row: Calorie ring + Grade + Water ──
+              if (vm.summary != null)
+                Row(
+                  children: [
+                    CalorieRing(
+                        consumed: vm.summary!.totalCalories,
+                        goal: vm.summary!.calorieGoal,
+                        size: 120),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        children: [
+                          // Grade
+                          Text(vm.grade,
+                              style: TextStyle(
+                                  fontSize: 36, fontWeight: FontWeight.bold,
+                                  color: vm.gradeColor)),
+                          const Text('Nutrition Grade',
+                              style: TextStyle(
+                                  fontSize: 11, color: AppTheme.textHint)),
+                          const SizedBox(height: 12),
+                          // Water
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              GestureDetector(
+                                  onTap: vm.removeWater,
+                                  child: const Icon(Icons.remove, size: 18,
+                                      color: AppTheme.textHint)),
+                              const SizedBox(width: 6),
+                              const Icon(Icons.water_drop_rounded,
+                                  size: 16, color: Color(0xFF42A5F5)),
+                              Text(' ${vm.waterGlasses}',
+                                  style: const TextStyle(
+                                      fontSize: 16, fontWeight: FontWeight.bold,
+                                      color: Color(0xFF42A5F5))),
+                              const SizedBox(width: 6),
+                              GestureDetector(
+                                onTap: () {
+                                  HapticFeedback.selectionClick();
+                                  vm.addWater();
+                                },
+                                child: const Icon(Icons.add, size: 18,
+                                    color: Color(0xFF42A5F5)),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 20),
                   ],
+                ),
+              const SizedBox(height: 20),
 
-                  // ── Logged meals ──
-                  if (vm.todayLogs.isNotEmpty) ...[
-                    Text('Logged Today',
-                        style: Theme.of(context).textTheme.titleLarge),
+              // ── Burnout penalty (only if present) ──
+              if (vm.burnoutPenalty > 0)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.riskCritical.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.local_fire_department_rounded,
+                          color: AppTheme.riskCritical, size: 20),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          '+${vm.burnoutPenalty.round()} burnout penalty — eat more to fix',
+                          style: const TextStyle(
+                              fontSize: 13, color: AppTheme.riskCritical),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+              // ── Macros (expandable) ──
+              if (vm.summary != null)
+                ExpansionTile(
+                  tilePadding: EdgeInsets.zero,
+                  title: const Text('Macros & Goals',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                  initiallyExpanded: false,
+                  children: [
+                    MacroDonut(
+                      protein: vm.summary!.totalProtein,
+                      carbs: vm.summary!.totalCarbs,
+                      fat: vm.summary!.totalFat,
+                    ),
+                    const SizedBox(height: 12),
+                    NutritionProgressBar(label: 'Protein',
+                        current: vm.summary!.totalProtein,
+                        goal: vm.summary!.proteinGoal),
+                    NutritionProgressBar(label: 'Calories',
+                        current: vm.summary!.totalCalories,
+                        goal: vm.summary!.calorieGoal, unit: 'kcal'),
+                    NutritionProgressBar(label: 'Carbs',
+                        current: vm.summary!.totalCarbs,
+                        goal: vm.summary!.carbGoal),
+                    NutritionProgressBar(label: 'Fat',
+                        current: vm.summary!.totalFat,
+                        goal: vm.summary!.fatGoal),
                     const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 4,
-                      children: vm.todayLogs.map((log) {
-                        final food = vm.foodItems.firstWhere(
-                          (f) => f.id.toString() == log.foodItemId,
-                          orElse: () => vm.foodItems.first,
-                        );
-                        return Chip(
-                          label: Text(
-                              '${food.icon} ${food.name} x${log.quantity}'),
-                          deleteIcon: const Icon(Icons.close, size: 16),
+                  ],
+                ),
+
+              // ── Logged meals ──
+              if (vm.todayLogs.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    const Text('Logged',
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                    const Spacer(),
+                    Text('${vm.todayLogs.length} items',
+                        style: const TextStyle(
+                            fontSize: 12, color: AppTheme.textHint)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 36,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: vm.todayLogs.map((log) {
+                      final food = vm.foodItems.firstWhere(
+                        (f) => f.id.toString() == log.foodItemId,
+                        orElse: () => vm.foodItems.first,
+                      );
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: Chip(
+                          label: Text('${food.icon} ${food.name}',
+                              style: const TextStyle(fontSize: 12)),
+                          deleteIcon: const Icon(Icons.close, size: 14),
                           onDeleted: log.id != null
                               ? () => vm.removeLog(log.id!)
                               : null,
                           backgroundColor: AppTheme.surfaceLight,
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
+                          visualDensity: VisualDensity.compact,
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],
 
-                  // ── Deficit alerts ──
-                  if (vm.summary != null) ...[
-                    for (final entry in vm.summary!.deficitPercents.entries)
-                      if (entry.value > 50)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Card(
-                            color: AppTheme.riskCritical.withValues(alpha: 0.1),
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.warning_rounded,
-                                      color: AppTheme.riskModerate, size: 20),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Text(
-                                      'Low ${entry.key} — ${vm.summary!.deficits[entry.key]!.round()}${entry.key == "calories" ? "kcal" : "g"} below goal',
-                                      style: const TextStyle(fontSize: 13),
-                                    ),
-                                  ),
-                                ],
-                              ),
+              const SizedBox(height: 16),
+
+              // ── Add food section ──
+              const Text('Add Food',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 10),
+
+              // Filter chips
+              SizedBox(
+                height: 34,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    for (final f in [
+                      ['all', 'All'],
+                      ['protein-rich', 'Protein'],
+                      ['energy', 'Energy'],
+                      ['balanced', 'Balanced'],
+                      ['light', 'Light'],
+                    ])
+                      Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: GestureDetector(
+                          onTap: () => setState(() => _filter = f[0]),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 7),
+                            decoration: BoxDecoration(
+                              color: _filter == f[0]
+                                  ? AppTheme.primary
+                                  : AppTheme.surfaceLight,
+                              borderRadius: BorderRadius.circular(17),
                             ),
+                            child: Text(f[1],
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    color: _filter == f[0]
+                                        ? Colors.white
+                                        : AppTheme.textSecondary)),
                           ),
                         ),
-                  ],
-
-                  // ── Recommendations ──
-                  if (vm.recommendations.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Text('Suggested Foods',
-                        style: Theme.of(context).textTheme.titleLarge),
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      height: 110,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: vm.recommendations.length,
-                        separatorBuilder: (_, i) =>
-                            const SizedBox(width: 8),
-                        itemBuilder: (_, i) {
-                          final food = vm.recommendations[i];
-                          return SizedBox(
-                            width: 100,
-                            child: FoodGridItem(
-                              food: food,
-                              onTap: () => _showAddDialog(
-                                  context, food.id.toString(), food.name),
-                            ),
-                          );
-                        },
                       ),
-                    ),
-                    const SizedBox(height: 20),
                   ],
-
-                  // ── Food grid ──
-                  Text('Add Food',
-                      style: Theme.of(context).textTheme.titleLarge),
-                  const SizedBox(height: 12),
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      mainAxisSpacing: 8,
-                      crossAxisSpacing: 8,
-                      childAspectRatio: 0.85,
-                    ),
-                    itemCount: vm.foodItems.length,
-                    itemBuilder: (_, i) {
-                      final food = vm.foodItems[i];
-                      return FoodGridItem(
-                        food: food,
-                        onTap: () => _showAddDialog(
-                            context, food.id.toString(), food.name),
-                      );
-                    },
-                  ),
-
-                  if (vm.errorMessage != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 16),
-                      child: Text(vm.errorMessage!,
-                          style:
-                              const TextStyle(color: AppTheme.riskCritical)),
-                    ),
-                ],
+                ),
               ),
-            ),
+              const SizedBox(height: 12),
+
+              // Food grid
+              Builder(builder: (_) {
+                var foods = vm.foodItems;
+                if (_filter != 'all') {
+                  foods = foods.where((f) => f.category == _filter).toList();
+                }
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 4,
+                    mainAxisSpacing: 8,
+                    crossAxisSpacing: 8,
+                    childAspectRatio: 0.75,
+                  ),
+                  itemCount: foods.length,
+                  itemBuilder: (_, i) {
+                    final food = foods[i];
+                    return GestureDetector(
+                      onTap: () =>
+                          _addFood(food.id.toString(), food.name),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: AppTheme.surface,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(food.icon,
+                                style: const TextStyle(fontSize: 24)),
+                            const SizedBox(height: 4),
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 4),
+                              child: Text(food.name,
+                                  textAlign: TextAlign.center,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                      fontSize: 10, height: 1.2)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              }),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

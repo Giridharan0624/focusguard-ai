@@ -20,7 +20,7 @@ class AppTheme {
   static const Color colorSleep = Color(0xFF42A5F5);
   static const Color colorWork = Color(0xFFEF5350);
   static const Color colorMood = Color(0xFFAB47BC);
-  static const Color colorMeetings = Color(0xFFFFA726);
+  static const Color colorScreenTime = Color(0xFFFFA726);
   static const Color colorCaffeine = Color(0xFF66BB6A);
 
   // ── Nutrition Progress ──
@@ -42,8 +42,8 @@ class AppTheme {
         return colorWork;
       case 'Mood':
         return colorMood;
-      case 'Meetings':
-        return colorMeetings;
+      case 'Screen Time':
+        return colorScreenTime;
       case 'Caffeine':
         return colorCaffeine;
       default:

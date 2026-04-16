@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import '../data/nutrition_repository.dart';
 import '../models/food_item.dart';
@@ -82,8 +83,74 @@ class NutritionViewModel extends ChangeNotifier {
     }
   }
 
+  // ── Water tracking ──
+  int _waterGlasses = 0;
+  int get waterGlasses => _waterGlasses;
+
+  void addWater() {
+    _waterGlasses++;
+    notifyListeners();
+  }
+
+  void removeWater() {
+    if (_waterGlasses > 0) _waterGlasses--;
+    notifyListeners();
+  }
+
   /// Get the burnout penalty from current nutrition state.
   double get burnoutPenalty => summary?.burnoutPenalty ?? 0;
+
+  /// Nutrition grade A-F based on how close to goals.
+  String get grade {
+    if (summary == null) return '-';
+    final avg = (summary!.progressPercent('protein') +
+            summary!.progressPercent('calories') +
+            summary!.progressPercent('carbs') +
+            summary!.progressPercent('fat')) /
+        4;
+    if (avg >= 85) return 'A';
+    if (avg >= 70) return 'B';
+    if (avg >= 50) return 'C';
+    if (avg >= 30) return 'D';
+    return 'F';
+  }
+
+  Color get gradeColor {
+    switch (grade) {
+      case 'A': return const Color(0xFF4CAF50);
+      case 'B': return const Color(0xFF8BC34A);
+      case 'C': return const Color(0xFFFFC107);
+      case 'D': return const Color(0xFFFF9800);
+      case 'F': return const Color(0xFFF44336);
+      default: return const Color(0xFF757575);
+    }
+  }
+
+  /// Time-based meal suggestion category.
+  String get mealTimeSuggestion {
+    final hour = DateTime.now().hour;
+    if (hour < 11) return 'Breakfast';
+    if (hour < 15) return 'Lunch';
+    if (hour < 18) return 'Snack';
+    return 'Dinner';
+  }
+
+  /// Get recommended foods filtered by time of day.
+  List<FoodItem> get timeBasedRecommendations {
+    if (foodItems.isEmpty) return [];
+    final hour = DateTime.now().hour;
+    String category;
+    if (hour < 11) {
+      category = 'energy'; // breakfast: oats, banana, poha
+    } else if (hour < 15) {
+      category = 'balanced'; // lunch: rice, curry, dal
+    } else if (hour < 18) {
+      category = 'light'; // snack: fruits, salad
+    } else {
+      category = 'protein-rich'; // dinner: chicken, fish, paneer
+    }
+    return foodItems.where((f) => f.category == category).toList();
+  }
 
   void _recalculate() {
     summary = _nutritionService.summarize(todayLogs, foodItems);

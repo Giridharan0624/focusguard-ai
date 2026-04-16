@@ -1,15 +1,15 @@
 // ── Burnout Formula Weights ──
 const double kWeightSleep = 0.30;
 const double kWeightWork = 0.25;
-const double kWeightMood = 0.25;
-const double kWeightMeetings = 0.12;
-const double kWeightCaffeine = 0.08;
+const double kWeightMood = 0.20;
+const double kWeightScreenTime = 0.15;
+const double kWeightCaffeine = 0.10;
 
 // ── Normalization Caps ──
 const double kMaxSleepDeficit = 8.0;
 const double kMaxWorkHours = 16.0;
 const double kMaxMoodDeficit = 9.0;
-const double kMaxMeetings = 10.0;
+const double kMaxScreenTime = 16.0;
 const double kMaxCaffeine = 10.0;
 
 // ── Optimal Sleep Range ──
@@ -22,7 +22,7 @@ const double kOversleepDivisor = 7.0;
 const double kDefaultSleep = 7.0;
 const double kDefaultWorkHours = 8.0;
 const int kDefaultMood = 5;
-const int kDefaultMeetings = 2;
+const double kDefaultScreenTime = 4.0;
 const int kDefaultCaffeine = 2;
 
 // ── Input Ranges ──
@@ -32,8 +32,8 @@ const double kMinWork = 0;
 const double kMaxWork = 24;
 const int kMinMood = 1;
 const int kMaxMood = 10;
-const int kMinMeetings = 0;
-const int kMaxMeetingsInput = 20;
+const double kMinScreenTime = 0;
+const double kMaxScreenTimeInput = 16;
 const int kMinCaffeine = 0;
 const int kMaxCaffeineInput = 15;
 
@@ -55,7 +55,7 @@ const int kHistoryLookback = 7;
 const double kSimTargetSleep = 7.5;
 const double kSimTargetWork = 8.0;
 const int kSimMoodBoost = 2;
-const double kSimMeetingReduction = 0.5;
+const double kSimTargetScreenTime = 4.0;
 const int kSimTargetCaffeine = 2;
 
 // ── Nutrition Goals ──
@@ -74,7 +74,7 @@ const double kCaloriePenalty = 4;
 const double kDemoSleep = 4;
 const double kDemoWork = 12;
 const int kDemoMood = 3;
-const int kDemoMeetings = 7;
+const double kDemoScreenTime = 12;
 const int kDemoCaffeine = 6;
 
 // ── Risk Level Labels ──
