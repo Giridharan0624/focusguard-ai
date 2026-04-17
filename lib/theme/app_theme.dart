@@ -1,12 +1,42 @@
 import 'package:flutter/material.dart';
 
+/// Material 3 design system for FocusGuard AI.
 class AppTheme {
   AppTheme._();
 
-  // ── Shared Brand Colors ──
-  static const Color accent = Color(0xFF5B6EF5);
-  static const Color accentLight = Color(0xFF8B9AFF);
-  static const Color accentSoft = Color(0xFFDDE1FF);
+  // ════════════════════════════════════════
+  //  SPACING (4px grid)
+  // ════════════════════════════════════════
+  static const double space2 = 2;
+  static const double space4 = 4;
+  static const double space6 = 6;
+  static const double space8 = 8;
+  static const double space10 = 10;
+  static const double space12 = 12;
+  static const double space14 = 14;
+  static const double space16 = 16;
+  static const double space20 = 20;
+  static const double space24 = 24;
+  static const double space32 = 32;
+  static const double space40 = 40;
+
+  // ════════════════════════════════════════
+  //  RADIUS
+  // ════════════════════════════════════════
+  static const double radiusSm = 8;
+  static const double radiusMd = 12;
+  static const double radiusLg = 16;
+  static const double radiusXl = 20;
+  static const double radiusFull = 999;
+
+  // ════════════════════════════════════════
+  //  BRAND
+  // ════════════════════════════════════════
+  static const Color accent = Color(0xFFFBC02D);        // amber/yellow
+  static const Color accentLight = Color(0xFFFFD54F);
+  static const Color accentSoft = Color(0xFFFFF59D);
+  static const Color accentDark = Color(0xFFF9A825);
+  static const Color onAccent = Color(0xFF1A1D20);      // text on yellow
   static const Color warmAccent = Color(0xFFE8A87C);
   static const Color mintAccent = Color(0xFF41D4A8);
 
@@ -28,41 +58,47 @@ class AppTheme {
   static const Color nutrientWarning = Color(0xFFE8A87C);
   static const Color nutrientLow = Color(0xFFE05B5B);
 
-  // ── Dark Theme Colors ──
-  static const Color _darkBg = Color(0xFF0D1117);
-  static const Color _darkSurface = Color(0xFF161B22);
-  static const Color _darkSurfaceLight = Color(0xFF21262D);
-  static const Color _darkText = Color(0xFFF0F6FC);
-  static const Color _darkTextSecondary = Color(0xFF8B949E);
-  static const Color _darkTextHint = Color(0xFF484F58);
+  // ════════════════════════════════════════
+  //  DARK COLORS
+  // ════════════════════════════════════════
+  static const Color _darkBg = Color(0xFF0A0D13);
+  static const Color _darkSurface = Color(0xFF131820);
+  static const Color _darkSurfaceElev = Color(0xFF1A1F2A);
+  static const Color _darkSurfaceLight = Color(0xFF222835);
+  static const Color _darkOutline = Color(0xFF2A3140);
+  static const Color _darkText = Color(0xFFF2F4F8);
+  static const Color _darkTextSecondary = Color(0xFF9AA3B3);
+  static const Color _darkTextHint = Color(0xFF5A6274);
 
-  // ── Light Theme Colors ──
-  static const Color _lightBg = Color(0xFFF6F8FC);
+  // ════════════════════════════════════════
+  //  LIGHT COLORS
+  // ════════════════════════════════════════
+  static const Color _lightBg = Color(0xFFF7F9FD);
   static const Color _lightSurface = Color(0xFFFFFFFF);
-  static const Color _lightSurfaceLight = Color(0xFFEEF1F6);
-  static const Color _lightText = Color(0xFF1A1D26);
-  static const Color _lightTextSecondary = Color(0xFF5E6478);
-  static const Color _lightTextHint = Color(0xFF9DA3B0);
+  static const Color _lightSurfaceElev = Color(0xFFFBFCFE);
+  static const Color _lightSurfaceLight = Color(0xFFEEF1F7);
+  static const Color _lightOutline = Color(0xFFE1E5EE);
+  static const Color _lightText = Color(0xFF131720);
+  static const Color _lightTextSecondary = Color(0xFF5B6478);
+  static const Color _lightTextHint = Color(0xFF98A0B0);
 
-  // ── Theme-aware accessors ──
-  static Color bg(BuildContext context) =>
-      Theme.of(context).scaffoldBackgroundColor;
-  static Color card(BuildContext context) =>
-      Theme.of(context).cardColor;
-  static Color sl(BuildContext context) =>
-      Theme.of(context).brightness == Brightness.dark
-          ? _darkSurfaceLight : _lightSurfaceLight;
-  static Color tp(BuildContext context) =>
-      Theme.of(context).brightness == Brightness.dark
-          ? _darkText : _lightText;
-  static Color ts(BuildContext context) =>
-      Theme.of(context).brightness == Brightness.dark
-          ? _darkTextSecondary : _lightTextSecondary;
-  static Color th(BuildContext context) =>
-      Theme.of(context).brightness == Brightness.dark
-          ? _darkTextHint : _lightTextHint;
+  // ════════════════════════════════════════
+  //  THEME-AWARE ACCESSORS
+  // ════════════════════════════════════════
+  static bool _isDark(BuildContext c) => Theme.of(c).brightness == Brightness.dark;
 
-  // ── Static constants (backward compat for existing code) ──
+  static Color bg(BuildContext c) => _isDark(c) ? _darkBg : _lightBg;
+  static Color card(BuildContext c) => _isDark(c) ? _darkSurface : _lightSurface;
+  static Color cardElev(BuildContext c) => _isDark(c) ? _darkSurfaceElev : _lightSurfaceElev;
+  static Color sl(BuildContext c) => _isDark(c) ? _darkSurfaceLight : _lightSurfaceLight;
+  static Color outline(BuildContext c) => _isDark(c) ? _darkOutline : _lightOutline;
+  static Color tp(BuildContext c) => _isDark(c) ? _darkText : _lightText;
+  static Color ts(BuildContext c) => _isDark(c) ? _darkTextSecondary : _lightTextSecondary;
+  static Color th(BuildContext c) => _isDark(c) ? _darkTextHint : _lightTextHint;
+
+  // ════════════════════════════════════════
+  //  BACK-COMPAT STATIC CONSTANTS
+  // ════════════════════════════════════════
   static const Color primary = accent;
   static const Color primaryLight = accentLight;
   static const Color background = _darkBg;
@@ -72,7 +108,9 @@ class AppTheme {
   static const Color textSecondary = _darkTextSecondary;
   static const Color textHint = _darkTextHint;
 
-  // ── Cause colors by key ──
+  // ════════════════════════════════════════
+  //  COLOR HELPERS
+  // ════════════════════════════════════════
   static Color causeColor(String cause) {
     switch (cause) {
       case 'Sleep': return colorSleep;
@@ -100,238 +138,394 @@ class AppTheme {
     return nutrientLow;
   }
 
-  // ── Gradient helpers ──
-  static LinearGradient cardGradient(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-      colors: isDark
-          ? [_darkSurface, _darkSurfaceLight.withValues(alpha: 0.6)]
-          : [_lightSurface, _lightSurfaceLight.withValues(alpha: 0.4)],
+  // ════════════════════════════════════════
+  //  DECORATIONS
+  // ════════════════════════════════════════
+  static BoxDecoration glassCard(BuildContext context) {
+    final dark = _isDark(context);
+    return BoxDecoration(
+      color: dark ? _darkSurface : _lightSurface,
+      borderRadius: BorderRadius.circular(radiusLg),
+      border: Border.all(
+        color: dark ? _darkOutline : _lightOutline,
+        width: 1,
+      ),
+      boxShadow: dark
+          ? null
+          : [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 12,
+                offset: const Offset(0, 2),
+              ),
+            ],
     );
   }
 
-  static LinearGradient accentGradient = const LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [Color(0xFF5B6EF5), Color(0xFF8B5CF6)],
-  );
-
-  // ── Glass card decoration ──
-  static BoxDecoration glassCard(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+  static BoxDecoration elevatedCard(BuildContext context) {
+    final dark = _isDark(context);
     return BoxDecoration(
-      color: isDark
-          ? _darkSurface.withValues(alpha: 0.7)
-          : _lightSurface.withValues(alpha: 0.85),
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(
-        color: isDark
-            ? Colors.white.withValues(alpha: 0.06)
-            : Colors.black.withValues(alpha: 0.04),
-      ),
+      color: dark ? _darkSurfaceElev : _lightSurface,
+      borderRadius: BorderRadius.circular(radiusLg),
       boxShadow: [
         BoxShadow(
-          color: isDark
+          color: dark
               ? Colors.black.withValues(alpha: 0.3)
-              : Colors.black.withValues(alpha: 0.06),
-          blurRadius: 20,
+              : Colors.black.withValues(alpha: 0.05),
+          blurRadius: 16,
           offset: const Offset(0, 4),
         ),
       ],
     );
   }
 
-  // ══════════════════════════════════════════
+  static LinearGradient accentGradient = const LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [accent, accentDark],
+  );
+
+  static LinearGradient cardGradient(BuildContext context) {
+    final dark = _isDark(context);
+    return LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: dark
+          ? [_darkSurface, _darkSurfaceElev]
+          : [_lightSurface, _lightSurfaceElev],
+    );
+  }
+
+  // ════════════════════════════════════════
   //  DARK THEME
-  // ══════════════════════════════════════════
-  static ThemeData get darkTheme => ThemeData(
+  // ════════════════════════════════════════
+  static ThemeData get darkTheme => _buildTheme(
         brightness: Brightness.dark,
-        primaryColor: accent,
-        scaffoldBackgroundColor: _darkBg,
-        cardColor: _darkSurface,
-        fontFamily: 'Poppins',
-        colorScheme: const ColorScheme.dark(
-          primary: accent,
-          secondary: accentLight,
-          surface: _darkSurface,
-          onPrimary: Colors.white,
-          onSurface: _darkText,
-        ),
-        textTheme: const TextTheme(
-          headlineLarge: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: _darkText, letterSpacing: -0.5),
-          headlineMedium: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: _darkText, letterSpacing: -0.3),
-          titleLarge: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: _darkText),
-          bodyLarge: TextStyle(fontSize: 15, color: _darkText, height: 1.5),
-          bodyMedium: TextStyle(fontSize: 13, color: _darkTextSecondary, height: 1.5),
-          labelLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _darkText),
-        ),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          titleTextStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: _darkText),
-          iconTheme: IconThemeData(color: _darkTextSecondary),
-        ),
-        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-          backgroundColor: _darkSurface,
-          selectedItemColor: accent,
-          unselectedItemColor: _darkTextHint,
-          type: BottomNavigationBarType.fixed,
-          elevation: 0,
-        ),
-        cardTheme: CardThemeData(
-          color: _darkSurface,
-          elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: accent,
-            foregroundColor: Colors.white,
-            elevation: 0,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-            textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-          ),
-        ),
-        outlinedButtonTheme: OutlinedButtonThemeData(
-          style: OutlinedButton.styleFrom(
-            foregroundColor: accent,
-            side: BorderSide(color: accent.withValues(alpha: 0.3)),
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          ),
-        ),
-        textButtonTheme: TextButtonThemeData(
-          style: TextButton.styleFrom(foregroundColor: accent),
-        ),
-        sliderTheme: SliderThemeData(
-          activeTrackColor: accent,
-          inactiveTrackColor: _darkSurfaceLight,
-          thumbColor: accent,
-          overlayColor: accent.withValues(alpha: 0.12),
-          trackHeight: 4,
-          thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: _darkSurfaceLight,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide.none,
-          ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          hintStyle: const TextStyle(color: _darkTextHint, fontSize: 14),
-        ),
-        floatingActionButtonTheme: const FloatingActionButtonThemeData(
-          backgroundColor: accent,
-          foregroundColor: Colors.white,
-          elevation: 4,
-          shape: CircleBorder(),
-        ),
-        dividerTheme: DividerThemeData(color: _darkSurfaceLight),
-        chipTheme: ChipThemeData(
-          backgroundColor: _darkSurfaceLight,
-          labelStyle: const TextStyle(fontSize: 12, color: _darkTextSecondary),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          side: BorderSide.none,
-        ),
+        bg: _darkBg,
+        surface: _darkSurface,
+        surfaceLight: _darkSurfaceLight,
+        outline: _darkOutline,
+        text: _darkText,
+        textSecondary: _darkTextSecondary,
+        textHint: _darkTextHint,
       );
 
-  // ══════════════════════════════════════════
+  // ════════════════════════════════════════
   //  LIGHT THEME
-  // ══════════════════════════════════════════
-  static ThemeData get lightTheme => ThemeData(
+  // ════════════════════════════════════════
+  static ThemeData get lightTheme => _buildTheme(
         brightness: Brightness.light,
-        primaryColor: accent,
-        scaffoldBackgroundColor: _lightBg,
-        cardColor: _lightSurface,
-        fontFamily: 'Poppins',
-        colorScheme: const ColorScheme.light(
-          primary: accent,
-          secondary: accentLight,
-          surface: _lightSurface,
-          onPrimary: Colors.white,
-          onSurface: _lightText,
-        ),
-        textTheme: const TextTheme(
-          headlineLarge: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: _lightText, letterSpacing: -0.5),
-          headlineMedium: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: _lightText, letterSpacing: -0.3),
-          titleLarge: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: _lightText),
-          bodyLarge: TextStyle(fontSize: 15, color: _lightText, height: 1.5),
-          bodyMedium: TextStyle(fontSize: 13, color: _lightTextSecondary, height: 1.5),
-          labelLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _lightText),
-        ),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.transparent,
+        bg: _lightBg,
+        surface: _lightSurface,
+        surfaceLight: _lightSurfaceLight,
+        outline: _lightOutline,
+        text: _lightText,
+        textSecondary: _lightTextSecondary,
+        textHint: _lightTextHint,
+      );
+
+  static ThemeData _buildTheme({
+    required Brightness brightness,
+    required Color bg,
+    required Color surface,
+    required Color surfaceLight,
+    required Color outline,
+    required Color text,
+    required Color textSecondary,
+    required Color textHint,
+  }) {
+    final isDark = brightness == Brightness.dark;
+    return ThemeData(
+      useMaterial3: true,
+      brightness: brightness,
+      primaryColor: accent,
+      scaffoldBackgroundColor: bg,
+      cardColor: surface,
+      fontFamily: 'Poppins',
+
+      colorScheme: ColorScheme(
+        brightness: brightness,
+        primary: accent,
+        onPrimary: onAccent,
+        secondary: mintAccent,
+        onSecondary: Colors.white,
+        tertiary: warmAccent,
+        onTertiary: Colors.white,
+        error: riskCritical,
+        onError: Colors.white,
+        surface: surface,
+        onSurface: text,
+        surfaceContainerHighest: surfaceLight,
+        outline: outline,
+        outlineVariant: outline,
+      ),
+
+      // Material 3 Typography Scale (Poppins)
+      textTheme: TextTheme(
+        displayLarge: TextStyle(fontSize: 34, fontWeight: FontWeight.w700, color: text, height: 1.2, letterSpacing: -0.5),
+        displayMedium: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: text, height: 1.25, letterSpacing: -0.4),
+        displaySmall: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: text, height: 1.3, letterSpacing: -0.3),
+        headlineLarge: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: text, height: 1.3, letterSpacing: -0.2),
+        headlineMedium: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: text, height: 1.3, letterSpacing: -0.2),
+        headlineSmall: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: text, height: 1.35),
+        titleLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: text, height: 1.4),
+        titleMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: text, height: 1.4),
+        titleSmall: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: text, height: 1.4),
+        bodyLarge: TextStyle(fontSize: 15, fontWeight: FontWeight.w400, color: text, height: 1.5),
+        bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w400, color: textSecondary, height: 1.5),
+        bodySmall: TextStyle(fontSize: 12, fontWeight: FontWeight.w400, color: textSecondary, height: 1.5),
+        labelLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: text, letterSpacing: 0.1),
+        labelMedium: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: textSecondary, letterSpacing: 0.1),
+        labelSmall: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: textHint, letterSpacing: 0.5),
+      ),
+
+      appBarTheme: AppBarTheme(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: false,
+        titleTextStyle: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: text, fontFamily: 'Poppins'),
+        iconTheme: IconThemeData(color: textSecondary, size: 22),
+      ),
+
+      cardTheme: CardThemeData(
+        color: surface,
+        elevation: 0,
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusLg)),
+      ),
+
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: accent,
+          foregroundColor: onAccent,
           elevation: 0,
-          titleTextStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: _lightText),
-          iconTheme: IconThemeData(color: _lightTextSecondary),
+          padding: const EdgeInsets.symmetric(horizontal: space24, vertical: space16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusMd)),
+          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, fontFamily: 'Poppins'),
         ),
-        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-          backgroundColor: _lightSurface,
-          selectedItemColor: accent,
-          unselectedItemColor: _lightTextHint,
-          type: BottomNavigationBarType.fixed,
-          elevation: 0,
+      ),
+
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: accent,
+          side: BorderSide(color: accent.withValues(alpha: 0.3)),
+          padding: const EdgeInsets.symmetric(horizontal: space24, vertical: space14),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusMd)),
+          textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, fontFamily: 'Poppins'),
         ),
-        cardTheme: CardThemeData(
-          color: _lightSurface,
-          elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      ),
+
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: accent,
+          textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, fontFamily: 'Poppins'),
         ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: accent,
-            foregroundColor: Colors.white,
-            elevation: 0,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-            textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-          ),
-        ),
-        outlinedButtonTheme: OutlinedButtonThemeData(
-          style: OutlinedButton.styleFrom(
-            foregroundColor: accent,
-            side: BorderSide(color: accent.withValues(alpha: 0.3)),
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          ),
-        ),
-        textButtonTheme: TextButtonThemeData(
-          style: TextButton.styleFrom(foregroundColor: accent),
-        ),
-        sliderTheme: SliderThemeData(
-          activeTrackColor: accent,
-          inactiveTrackColor: _lightSurfaceLight,
-          thumbColor: accent,
-          overlayColor: accent.withValues(alpha: 0.12),
-          trackHeight: 4,
-          thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: _lightSurfaceLight,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide.none,
-          ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          hintStyle: const TextStyle(color: _lightTextHint, fontSize: 14),
-        ),
-        floatingActionButtonTheme: const FloatingActionButtonThemeData(
+      ),
+
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
           backgroundColor: accent,
           foregroundColor: Colors.white,
-          elevation: 4,
-          shape: CircleBorder(),
+          padding: const EdgeInsets.symmetric(horizontal: space24, vertical: space14),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusMd)),
         ),
-        dividerTheme: DividerThemeData(color: _lightSurfaceLight),
-        chipTheme: ChipThemeData(
-          backgroundColor: _lightSurfaceLight,
-          labelStyle: const TextStyle(fontSize: 12, color: _lightTextSecondary),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          side: BorderSide.none,
+      ),
+
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: surfaceLight,
+        hintStyle: TextStyle(color: textHint, fontSize: 14),
+        contentPadding: const EdgeInsets.symmetric(horizontal: space16, vertical: space14),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radiusMd),
+          borderSide: BorderSide.none,
         ),
-      );
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radiusMd),
+          borderSide: BorderSide(color: outline, width: 1),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radiusMd),
+          borderSide: BorderSide(color: accent, width: 1.5),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radiusMd),
+          borderSide: const BorderSide(color: riskCritical, width: 1),
+        ),
+      ),
+
+      sliderTheme: SliderThemeData(
+        activeTrackColor: accent,
+        inactiveTrackColor: surfaceLight,
+        thumbColor: accent,
+        overlayColor: accent.withValues(alpha: 0.12),
+        trackHeight: 4,
+        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8, pressedElevation: 2),
+        overlayShape: const RoundSliderOverlayShape(overlayRadius: 18),
+      ),
+
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor: surface,
+        selectedItemColor: accent,
+        unselectedItemColor: textHint,
+        type: BottomNavigationBarType.fixed,
+        elevation: 0,
+      ),
+
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: accent,
+        foregroundColor: Colors.white,
+        elevation: 4,
+        shape: CircleBorder(),
+      ),
+
+      dividerTheme: DividerThemeData(color: outline, thickness: 1, space: 1),
+
+      chipTheme: ChipThemeData(
+        backgroundColor: surfaceLight,
+        labelStyle: TextStyle(fontSize: 12, color: textSecondary, fontFamily: 'Poppins'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusFull)),
+        side: BorderSide.none,
+        padding: const EdgeInsets.symmetric(horizontal: space10, vertical: space4),
+      ),
+
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: isDark ? surfaceLight : text,
+        contentTextStyle: TextStyle(
+          color: isDark ? text : surface,
+          fontFamily: 'Poppins',
+          fontSize: 14,
+        ),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusMd)),
+      ),
+
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: surface,
+        surfaceTintColor: Colors.transparent,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(radiusXl)),
+        ),
+      ),
+
+      dialogTheme: DialogThemeData(
+        backgroundColor: surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusLg)),
+      ),
+
+      iconTheme: IconThemeData(color: textSecondary, size: 22),
+    );
+  }
+}
+
+// ════════════════════════════════════════
+//  SHARED UI COMPONENTS
+// ════════════════════════════════════════
+
+/// Section header with title, optional subtitle and trailing.
+class SectionHeader extends StatelessWidget {
+  final String title;
+  final String? subtitle;
+  final Widget? trailing;
+  final IconData? icon;
+
+  const SectionHeader({
+    super.key,
+    required this.title,
+    this.subtitle,
+    this.trailing,
+    this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppTheme.space12),
+      child: Row(
+        children: [
+          if (icon != null)
+            Padding(
+              padding: const EdgeInsets.only(right: AppTheme.space8),
+              child: Icon(icon, size: 16, color: AppTheme.th(context)),
+            ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700)),
+                if (subtitle != null)
+                  Text(subtitle!,
+                      style: Theme.of(context).textTheme.bodySmall),
+              ],
+            ),
+          ),
+          if (trailing != null) trailing!,
+        ],
+      ),
+    );
+  }
+}
+
+/// Reusable glass card with consistent styling.
+class AppCard extends StatelessWidget {
+  final Widget child;
+  final EdgeInsets? padding;
+  final VoidCallback? onTap;
+
+  const AppCard({super.key, required this.child, this.padding, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final content = Container(
+      padding: padding ?? const EdgeInsets.all(AppTheme.space16),
+      decoration: AppTheme.glassCard(context),
+      child: child,
+    );
+    if (onTap == null) return content;
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+        child: content,
+      ),
+    );
+  }
+}
+
+/// Section wrapper: header + card body.
+class AppSection extends StatelessWidget {
+  final String? title;
+  final String? subtitle;
+  final IconData? icon;
+  final Widget? trailing;
+  final Widget child;
+  final EdgeInsets? bodyPadding;
+
+  const AppSection({
+    super.key,
+    this.title,
+    this.subtitle,
+    this.icon,
+    this.trailing,
+    required this.child,
+    this.bodyPadding,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (title != null)
+          SectionHeader(
+              title: title!, subtitle: subtitle, icon: icon, trailing: trailing),
+        AppCard(padding: bodyPadding, child: child),
+      ],
+    );
+  }
 }

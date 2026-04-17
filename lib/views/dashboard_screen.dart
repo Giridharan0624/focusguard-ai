@@ -1,4 +1,4 @@
-import 'package:fl_chart/fl_chart.dart';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -6,10 +6,8 @@ import '../theme/app_theme.dart';
 import '../viewmodels/auth_viewmodel.dart';
 import '../viewmodels/checkin_viewmodel.dart';
 import '../viewmodels/history_viewmodel.dart';
-import '../widgets/burnout_gauge.dart';
 import 'chat_screen.dart';
 import 'result_screen.dart';
-import 'settings_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final void Function(int) onSwitchTab;
@@ -28,296 +26,92 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
-  String _greeting(double? score) {
-    final hour = DateTime.now().hour;
-    final time = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
-    if (score == null) return 'Good $time';
-    if (score <= 25) return 'Great $time';
-    if (score <= 50) return 'Good $time';
-    if (score <= 75) return 'Hang in there';
-    return 'Take it easy';
-  }
-
   @override
   Widget build(BuildContext context) {
     final authVM = context.watch<AuthViewModel>();
     final checkinVM = context.watch<CheckInViewModel>();
-    final historyVM = context.watch<HistoryViewModel>();
     final result = checkinVM.result;
 
-    // Extract history scores for mini trend
-    final historyScores = historyVM.entries
-        .take(7)
-        .map((e) => (e['burnout_score'] as num?)?.toDouble() ?? 0.0)
-        .toList()
-        .reversed
-        .toList();
+    // Score: invert burnout (high burnout = low wellness)
+    final wellness = result != null ? (100 - result.score).round() : 0;
+    final moodValue = result != null ? checkinVM.mood : 0;
 
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.push(
-            context, MaterialPageRoute(builder: (_) => const ChatScreen())),
-        child: const Icon(Icons.psychology_rounded),
-      ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── Header ──
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('${_greeting(result?.score)},',
-                            style: TextStyle(fontSize: 14, color: AppTheme.th(context))),
-                        Text(authVM.userProfile?.name ?? 'there',
-                            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
-                      ],
-                    ),
-                  ),
-                  // Streak
-                  if (historyScores.length >= 2)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      margin: const EdgeInsets.only(right: 8),
-                      decoration: BoxDecoration(
-                        color: AppTheme.warmAccent.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Text('\u{1F525}', style: TextStyle(fontSize: 14)),
-                          const SizedBox(width: 4),
-                          Text('${historyScores.length}',
-                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700,
-                                  color: AppTheme.warmAccent)),
-                        ],
-                      ),
-                    ),
-                  GestureDetector(
-                    onTap: () => Navigator.push(
-                        context, MaterialPageRoute(builder: (_) => const SettingsScreen())),
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: AppTheme.sl(context),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(Icons.settings_rounded, size: 20,
-                          color: AppTheme.th(context)),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-
-              if (result != null) ...[
-                // ── Score ──
-                Center(child: BurnoutGauge(score: result.score, size: 180)),
-                const SizedBox(height: 12),
-
-                // ── AI insight ──
-                Center(
-                  child: checkinVM.isAiLoading
-                      ? SizedBox(height: 16, width: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.accent))
-                      : Text(
-                          checkinVM.aiInsight ?? result.topCauseInsight,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 13, color: AppTheme.ts(context)),
-                        ),
-                ),
-                const SizedBox(height: 20),
-
-                // ── Stats row ──
-                Row(
-                  children: [
-                    _Stat(label: 'Tomorrow',
-                        value: '${result.predictedTomorrow.round()}',
-                        color: AppTheme.riskColor(CheckInViewModel.riskLevel(result.predictedTomorrow))),
-                    const SizedBox(width: 10),
-                    _Stat(label: 'After fix',
-                        value: '${result.simulatedScore.round()}',
-                        color: AppTheme.riskLow),
-                  ],
-                ),
-                const SizedBox(height: 12),
-
-                // ── View results ──
-                SizedBox(
-                  width: double.infinity,
-                  child: TextButton(
-                    onPressed: () => Navigator.push(context,
-                        MaterialPageRoute(builder: (_) => const ResultScreen())),
-                    child: const Text('View full results  \u2192'),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // ── Today's summary card ──
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: AppTheme.glassCard(context),
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 120),
+          children: [
+            // ══ Welcome row ══
+            Row(
+              children: [
+                _Avatar(name: authVM.userProfile?.name ?? '?'),
+                const SizedBox(width: 12),
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text("Today's Check-In",
-                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
-                              color: AppTheme.th(context))),
-                      const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          _MiniStat(icon: Icons.bedtime_rounded,
-                              value: '${result.score > 0 ? checkinVM.sleepHours.toStringAsFixed(1) : "-"}h',
-                              label: 'Sleep', color: AppTheme.colorSleep),
-                          _MiniStat(icon: Icons.work_rounded,
-                              value: '${result.score > 0 ? checkinVM.workHours.toStringAsFixed(1) : "-"}h',
-                              label: 'Work', color: AppTheme.colorWork),
-                          _MiniStat(icon: Icons.phone_android_rounded,
-                              value: '${result.score > 0 ? checkinVM.screenTime.toStringAsFixed(1) : "-"}h',
-                              label: 'Screen', color: AppTheme.colorScreenTime),
-                          _MiniStat(icon: Icons.coffee_rounded,
-                              value: '${result.score > 0 ? checkinVM.caffeine : "-"}',
-                              label: 'Caffeine', color: AppTheme.colorCaffeine),
-                        ],
+                      Text('Welcome back,',
+                          style: Theme.of(context).textTheme.bodySmall),
+                      Text(
+                        authVM.userProfile?.name ?? 'there',
+                        style: Theme.of(context).textTheme.titleLarge
+                            ?.copyWith(fontWeight: FontWeight.w700),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
-
-                // ── 7-day mini trend ──
-                if (historyScores.length >= 2)
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: AppTheme.glassCard(context),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text('7-Day Trend',
-                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
-                                    color: AppTheme.th(context))),
-                            const Spacer(),
-                            Text('${historyScores.length} check-ins',
-                                style: TextStyle(fontSize: 11, color: AppTheme.th(context))),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        SizedBox(
-                          height: 60,
-                          child: LineChart(
-                            LineChartData(
-                              minY: 0, maxY: 100,
-                              gridData: const FlGridData(show: false),
-                              titlesData: const FlTitlesData(show: false),
-                              borderData: FlBorderData(show: false),
-                              lineBarsData: [
-                                LineChartBarData(
-                                  spots: historyScores.asMap().entries
-                                      .map((e) => FlSpot(e.key.toDouble(), e.value))
-                                      .toList(),
-                                  isCurved: true,
-                                  color: AppTheme.accent,
-                                  barWidth: 2.5,
-                                  dotData: FlDotData(
-                                    show: true,
-                                    getDotPainter: (s, v, b, i) => FlDotCirclePainter(
-                                      radius: 3,
-                                      color: AppTheme.riskColor(
-                                          CheckInViewModel.riskLevel(s.y)),
-                                      strokeWidth: 0,
-                                    ),
-                                  ),
-                                  belowBarData: BarAreaData(
-                                    show: true,
-                                    color: AppTheme.accent.withValues(alpha: 0.08),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-              ] else ...[
-                // ── Empty state ──
-                const SizedBox(height: 16),
-                Center(
-                  child: Column(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          gradient: AppTheme.accentGradient,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(color: AppTheme.accent.withValues(alpha: 0.25),
-                                blurRadius: 24, spreadRadius: 2),
-                          ],
-                        ),
-                        child: const Icon(Icons.shield_rounded, size: 48, color: Colors.white),
-                      ),
-                      const SizedBox(height: 20),
-                      const Text('No check-in yet today',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 6),
-                      Text('Start your daily check-in to track burnout',
-                          style: TextStyle(fontSize: 14, color: AppTheme.th(context))),
-                    ],
-                  ),
+                _HeaderIcon(
+                  icon: Icons.notifications_none_rounded,
+                  onTap: () {},
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(width: 8),
+                _HeaderIcon(
+                  icon: Icons.person_rounded,
+                  onTap: () => widget.onSwitchTab(4),
+                ),
               ],
+            ),
+            const SizedBox(height: 20),
 
-              const SizedBox(height: 12),
+            // ══ Daily Score (Yellow hero card) ══
+            _DailyScoreCard(
+              wellnessScore: wellness,
+              hasCheckin: result != null,
+              onTap: result != null
+                  ? () => Navigator.push(context,
+                      MaterialPageRoute(builder: (_) => const ResultScreen()))
+                  : () => widget.onSwitchTab(1),
+            ),
+            const SizedBox(height: 20),
 
-              // ── Demo button ──
-              Center(
-                child: TextButton.icon(
-                  onPressed: checkinVM.isLoading ? null : () {
-                    HapticFeedback.lightImpact();
-                    checkinVM.loadDemoData();
-                    checkinVM.submit();
-                  },
-                  icon: const Icon(Icons.play_arrow_rounded, size: 18),
-                  label: Text(result != null ? 'Run demo again' : 'Try demo',
-                      style: const TextStyle(fontSize: 13)),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
+            // ══ Mood row ══
+            Text('Choose your mood for today',
+                style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(height: 12),
+            _MoodRow(
+              selectedMood: moodValue,
+              onSelect: (m) {
+                HapticFeedback.selectionClick();
+                checkinVM.mood = m;
+              },
+            ),
+            const SizedBox(height: 20),
 
-// ── Stat card ──
-class _Stat extends StatelessWidget {
-  final String label, value;
-  final Color color;
-  const _Stat({required this.label, required this.value, required this.color});
+            // ══ Bento grid ══
+            _BentoGrid(
+              sleepHours: result != null ? checkinVM.sleepHours : null,
+              workHours: result != null ? checkinVM.workHours : null,
+              screenTime: result != null ? checkinVM.screenTime : null,
+              caffeine: result != null ? checkinVM.caffeine : null,
+              onTapCard: () => widget.onSwitchTab(1),
+            ),
+            const SizedBox(height: 20),
 
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 18),
-        decoration: AppTheme.glassCard(context),
-        child: Column(
-          children: [
-            Text(value, style: TextStyle(fontSize: 26, fontWeight: FontWeight.w700, color: color)),
-            const SizedBox(height: 2),
-            Text(label, style: TextStyle(fontSize: 12, color: AppTheme.th(context))),
+            // ══ AI Chat CTA ══
+            _ChatCTA(
+              onTap: () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const ChatScreen())),
+            ),
           ],
         ),
       ),
@@ -325,23 +119,436 @@ class _Stat extends StatelessWidget {
   }
 }
 
-// ── Mini stat in today's summary ──
-class _MiniStat extends StatelessWidget {
+// ══════════════════════════════════════════
+//  AVATAR
+// ══════════════════════════════════════════
+class _Avatar extends StatelessWidget {
+  final String name;
+  const _Avatar({required this.name});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 42, height: 42,
+      decoration: BoxDecoration(
+        gradient: AppTheme.accentGradient,
+        shape: BoxShape.circle,
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        name[0].toUpperCase(),
+        style: const TextStyle(
+            fontSize: 18, fontWeight: FontWeight.w700, color: AppTheme.onAccent),
+      ),
+    );
+  }
+}
+
+// ══════════════════════════════════════════
+//  HEADER ICON
+// ══════════════════════════════════════════
+class _HeaderIcon extends StatelessWidget {
   final IconData icon;
-  final String value, label;
-  final Color color;
-  const _MiniStat({required this.icon, required this.value, required this.label, required this.color});
+  final VoidCallback onTap;
+  const _HeaderIcon({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 38, height: 38,
+        decoration: BoxDecoration(
+          color: AppTheme.card(context),
+          shape: BoxShape.circle,
+          border: Border.all(color: AppTheme.outline(context), width: 1),
+        ),
+        child: Icon(icon, size: 18, color: AppTheme.tp(context)),
+      ),
+    );
+  }
+}
+
+// ══════════════════════════════════════════
+//  DAILY SCORE CARD (Yellow Hero)
+// ══════════════════════════════════════════
+class _DailyScoreCard extends StatelessWidget {
+  final int wellnessScore;
+  final bool hasCheckin;
+  final VoidCallback onTap;
+
+  const _DailyScoreCard({
+    required this.wellnessScore,
+    required this.hasCheckin,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppTheme.accent,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.accent.withValues(alpha: 0.25),
+              blurRadius: 24,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Daily Score',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.onAccent,
+                        height: 1.1,
+                      )),
+                  const SizedBox(height: 6),
+                  Text(
+                    hasCheckin
+                        ? '$wellnessScore% wellness today'
+                        : 'Complete check-in to see your score',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.onAccent,
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            _ScoreRing(percent: wellnessScore / 100),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ScoreRing extends StatelessWidget {
+  final double percent;
+  const _ScoreRing({required this.percent});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 80, height: 80,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          CustomPaint(
+            size: const Size(80, 80),
+            painter: _RingPainter(percent: percent),
+          ),
+          Text(
+            '${(percent * 100).round()}%',
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.onAccent,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RingPainter extends CustomPainter {
+  final double percent;
+  _RingPainter({required this.percent});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2 - 6;
+
+    // Background ring
+    final bg = Paint()
+      ..color = AppTheme.onAccent.withValues(alpha: 0.15)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 6
+      ..strokeCap = StrokeCap.round;
+    canvas.drawCircle(center, radius, bg);
+
+    // Progress ring
+    if (percent > 0) {
+      final fg = Paint()
+        ..color = AppTheme.onAccent
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 6
+        ..strokeCap = StrokeCap.round;
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        -pi / 2,
+        2 * pi * percent,
+        false,
+        fg,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_RingPainter old) => old.percent != percent;
+}
+
+// ══════════════════════════════════════════
+//  MOOD ROW
+// ══════════════════════════════════════════
+class _MoodRow extends StatelessWidget {
+  final int selectedMood;
+  final void Function(int) onSelect;
+
+  const _MoodRow({required this.selectedMood, required this.onSelect});
+
+  static const _moods = [
+    (2, '😫'),
+    (4, '😟'),
+    (6, '😐'),
+    (8, '🙂'),
+    (10, '😄'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: _moods.map((m) {
+        final selected = (selectedMood - m.$1).abs() <= 1 && selectedMood > 0;
+        return GestureDetector(
+          onTap: () => onSelect(m.$1),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: 52, height: 52,
+            decoration: BoxDecoration(
+              color: selected
+                  ? AppTheme.accent.withValues(alpha: 0.15)
+                  : AppTheme.card(context),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: selected ? AppTheme.accent : AppTheme.outline(context),
+                width: selected ? 2 : 1,
+              ),
+            ),
+            alignment: Alignment.center,
+            child: Text(m.$2,
+                style: TextStyle(fontSize: selected ? 24 : 20)),
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+// ══════════════════════════════════════════
+//  BENTO GRID
+// ══════════════════════════════════════════
+class _BentoGrid extends StatelessWidget {
+  final double? sleepHours;
+  final double? workHours;
+  final double? screenTime;
+  final int? caffeine;
+  final VoidCallback onTapCard;
+
+  const _BentoGrid({
+    required this.sleepHours,
+    required this.workHours,
+    required this.screenTime,
+    required this.caffeine,
+    required this.onTapCard,
+  });
+
+  String _hm(double? h) {
+    if (h == null) return '--';
+    final hours = h.floor();
+    final mins = ((h - hours) * 60).round();
+    if (mins == 0) return '${hours}h';
+    return '${hours}h ${mins}m';
+  }
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Icon(icon, size: 18, color: color),
-        const SizedBox(height: 4),
-        Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: color)),
-        Text(label, style: TextStyle(fontSize: 10, color: AppTheme.th(context))),
+        Row(
+          children: [
+            Expanded(
+              child: _BentoCard(
+                icon: Icons.nights_stay_rounded,
+                iconColor: const Color(0xFF42A5F5),
+                value: _hm(sleepHours),
+                label: 'Sleep',
+                subtitle: sleepHours != null && sleepHours! >= 7
+                    ? 'Good start, keep going'
+                    : 'Aim for 7-9 hours',
+                onTap: onTapCard,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _BentoCard(
+                icon: Icons.work_rounded,
+                iconColor: const Color(0xFFE07C54),
+                value: _hm(workHours),
+                label: 'Work',
+                subtitle: workHours != null && workHours! > 10
+                    ? 'Take a break'
+                    : "You're on track",
+                onTap: onTapCard,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _BentoCard(
+                icon: Icons.phone_android_rounded,
+                iconColor: const Color(0xFFFFA726),
+                value: _hm(screenTime),
+                label: 'Screen Time',
+                subtitle: screenTime != null && screenTime! > 8
+                    ? 'Too much screen'
+                    : 'Keep it balanced',
+                onTap: onTapCard,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _BentoCard(
+                icon: Icons.coffee_rounded,
+                iconColor: const Color(0xFFAB47BC),
+                value: caffeine != null ? '$caffeine' : '--',
+                label: 'Caffeine',
+                subtitle: caffeine != null && caffeine! > 4
+                    ? 'Cut back today'
+                    : 'Good amount',
+                onTap: onTapCard,
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }
 }
 
+class _BentoCard extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String value;
+  final String label;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _BentoCard({
+    required this.icon,
+    required this.iconColor,
+    required this.value,
+    required this.label,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppTheme.card(context),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppTheme.outline(context), width: 1),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 38, height: 38,
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: 0.18),
+                shape: BoxShape.circle,
+              ),
+              alignment: Alignment.center,
+              child: Icon(icon, size: 20, color: iconColor),
+            ),
+            const SizedBox(height: 14),
+            Text(value,
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.tp(context),
+                  height: 1.1,
+                )),
+            const SizedBox(height: 2),
+            Text(label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: AppTheme.tp(context),
+                )),
+            const SizedBox(height: 6),
+            Text(subtitle,
+                style: Theme.of(context).textTheme.labelSmall),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ══════════════════════════════════════════
+//  CHAT CTA
+// ══════════════════════════════════════════
+class _ChatCTA extends StatelessWidget {
+  final VoidCallback onTap;
+  const _ChatCTA({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        decoration: BoxDecoration(
+          color: AppTheme.accent,
+          borderRadius: BorderRadius.circular(AppTheme.radiusFull),
+        ),
+        child: Row(
+          children: [
+            const Expanded(
+              child: Text(
+                'Talk to AI coach',
+                style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.onAccent),
+              ),
+            ),
+            Container(
+              width: 36, height: 36,
+              decoration: const BoxDecoration(
+                color: AppTheme.onAccent,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.arrow_forward_rounded,
+                  size: 18, color: AppTheme.accent),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

@@ -20,190 +20,236 @@ class _HistoryScreenState extends State<HistoryScreen> {
     });
   }
 
-  void _showDetail(BuildContext context, Map<String, dynamic> entry) {
-    final date = entry['date'] as String? ?? '';
-    final score = (entry['burnout_score'] as num?)?.toDouble() ?? 0;
-    final sleep = (entry['sleep_hours'] as num?)?.toDouble() ?? 0;
-    final work = (entry['work_hours'] as num?)?.toDouble() ?? 0;
-    final mood = (entry['mood'] as num?)?.toInt() ?? 0;
-    final screenTime = (entry['screen_time'] as num?)?.toDouble() ?? 0;
-    final caffeine = (entry['caffeine'] as num?)?.toInt() ?? 0;
-    final level = CheckInViewModel.riskLevel(score);
-    final color = AppTheme.riskColor(level);
+  @override
+  Widget build(BuildContext context) {
+    final vm = context.watch<HistoryViewModel>();
+    final entries = vm.entries;
 
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppTheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+    double avg = 0;
+    if (entries.isNotEmpty) {
+      avg = entries.fold<double>(0, (s, e) =>
+          s + ((e['burnout_score'] as num?)?.toDouble() ?? 0)) / entries.length;
+    }
+
+    return Scaffold(
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 120),
           children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppTheme.textHint,
-                borderRadius: BorderRadius.circular(2),
-              ),
+            // ══ Header ══
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Your',
+                          style: Theme.of(context).textTheme.bodySmall),
+                      Text('History',
+                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700)),
+                    ],
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => vm.load(),
+                  child: Container(
+                    width: 38, height: 38,
+                    decoration: BoxDecoration(
+                      color: AppTheme.card(context),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppTheme.outline(context)),
+                    ),
+                    child: Icon(Icons.refresh_rounded, size: 18,
+                        color: AppTheme.tp(context)),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            Text(date,
-                style: const TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
-            Text(
-              'Score: ${score.round()}',
-              style: TextStyle(
-                  fontSize: 32, fontWeight: FontWeight.bold, color: color),
-            ),
-            Text(CheckInViewModel.riskLabel(level),
-                style: TextStyle(color: color, fontSize: 14)),
             const SizedBox(height: 20),
-            _DetailRow(icon: Icons.bedtime_rounded, label: 'Sleep', value: '${sleep}h'),
-            _DetailRow(icon: Icons.work_rounded, label: 'Work', value: '${work}h'),
-            _DetailRow(icon: Icons.mood_rounded, label: 'Mood', value: '$mood/10'),
-            _DetailRow(icon: Icons.phone_android_rounded, label: 'Screen Time', value: '${screenTime}h'),
-            _DetailRow(icon: Icons.coffee_rounded, label: 'Caffeine', value: '$caffeine cups'),
-            const SizedBox(height: 16),
+
+            // ══ Summary yellow card ══
+            if (entries.isNotEmpty)
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppTheme.accent,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.accent.withValues(alpha: 0.22),
+                      blurRadius: 20, offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Total Check-ins',
+                              style: TextStyle(fontSize: 12, color: AppTheme.onAccent)),
+                          const SizedBox(height: 4),
+                          Text('${entries.length}',
+                              style: const TextStyle(fontSize: 36, fontWeight: FontWeight.w700,
+                                  color: AppTheme.onAccent, height: 1)),
+                          const SizedBox(height: 4),
+                          Text('Avg burnout: ${avg.round()}',
+                              style: const TextStyle(fontSize: 12, color: AppTheme.onAccent)),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppTheme.onAccent.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.timeline_rounded,
+                          size: 28, color: AppTheme.onAccent),
+                    ),
+                  ],
+                ),
+              ),
+            const SizedBox(height: 20),
+
+            // ══ History list ══
+            if (vm.isLoading && entries.isEmpty)
+              const Center(
+                  child: Padding(
+                      padding: EdgeInsets.all(32),
+                      child: CircularProgressIndicator()))
+            else if (entries.isEmpty)
+              _EmptyState()
+            else ...[
+              Text('Recent Check-ins',
+                  style: Theme.of(context).textTheme.titleSmall),
+              const SizedBox(height: 12),
+              ...entries.asMap().entries.map((entry) => _HistoryCard(
+                  entry: entry.value, isFirst: entry.key == 0)),
+            ],
           ],
         ),
       ),
     );
   }
+}
 
+class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final vm = context.watch<HistoryViewModel>();
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('History'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded),
-            onPressed: () => vm.load(),
-          ),
-        ],
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppTheme.accent.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.history_rounded,
+                  size: 40, color: AppTheme.accent),
+            ),
+            const SizedBox(height: 16),
+            const Text('No check-ins yet',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 4),
+            Text('Your history will appear here',
+                style: Theme.of(context).textTheme.bodySmall),
+          ],
+        ),
       ),
-      body: vm.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : vm.entries.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      Icon(Icons.history_rounded,
-                          size: 64, color: AppTheme.surfaceLight),
-                      SizedBox(height: 12),
-                      Text(
-                        'No check-ins yet',
-                        style: TextStyle(color: AppTheme.textSecondary),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        'Complete a check-in to see your history!',
-                        style:
-                            TextStyle(color: AppTheme.textHint, fontSize: 13),
-                      ),
-                    ],
-                  ),
-                )
-              : RefreshIndicator(
-                  onRefresh: () => vm.load(),
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: vm.entries.length,
-                    itemBuilder: (_, i) {
-                      final entry = vm.entries[i];
-                      final date = entry['date'] as String? ?? '';
-                      final score =
-                          (entry['burnout_score'] as num?)?.toDouble() ?? 0;
-                      final level = CheckInViewModel.riskLevel(score);
-                      final color = AppTheme.riskColor(level);
-                      final sleep =
-                          (entry['sleep_hours'] as num?)?.toDouble() ?? 0;
-                      final work =
-                          (entry['work_hours'] as num?)?.toDouble() ?? 0;
-                      final mood = (entry['mood'] as num?)?.toInt() ?? 0;
-
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 10),
-                        child: ListTile(
-                          onTap: () => _showDetail(context, entry),
-                          leading: Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              color: color.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              score.round().toString(),
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: color,
-                              ),
-                            ),
-                          ),
-                          title: Text(date,
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.w500)),
-                          subtitle: Text(
-                            'Sleep ${sleep}h  |  Work ${work}h  |  Mood $mood/10',
-                            style: const TextStyle(
-                                fontSize: 12, color: AppTheme.textHint),
-                          ),
-                          trailing: Text(
-                            CheckInViewModel.riskLabel(level),
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: color,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
     );
   }
 }
 
-class _DetailRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-
-  const _DetailRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
+class _HistoryCard extends StatelessWidget {
+  final Map<String, dynamic> entry;
+  final bool isFirst;
+  const _HistoryCard({required this.entry, this.isFirst = false});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+    final date = entry['date'] as String? ?? '';
+    final score = (entry['burnout_score'] as num?)?.toDouble() ?? 0;
+    final level = CheckInViewModel.riskLevel(score);
+    final color = AppTheme.riskColor(level);
+    final sleep = (entry['sleep_hours'] as num?)?.toDouble() ?? 0;
+    final work = (entry['work_hours'] as num?)?.toDouble() ?? 0;
+    final mood = (entry['mood'] as num?)?.toInt() ?? 0;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppTheme.card(context),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppTheme.outline(context)),
+      ),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: AppTheme.textHint),
-          const SizedBox(width: 12),
-          Text(label,
-              style: const TextStyle(
-                  fontSize: 14, color: AppTheme.textSecondary)),
-          const Spacer(),
-          Text(value,
-              style: const TextStyle(
-                  fontSize: 14, fontWeight: FontWeight.w600)),
+          Container(
+            width: 48, height: 48,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: Text(score.round().toString(),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: color)),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(date,
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                    if (isFirst) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppTheme.accent,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text('Latest',
+                            style: TextStyle(fontSize: 9, color: AppTheme.onAccent,
+                                fontWeight: FontWeight.w700)),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(Icons.bedtime_rounded, size: 12, color: AppTheme.textHint),
+                    Text(' ${sleep.toStringAsFixed(1)}h  ',
+                        style: TextStyle(fontSize: 11, color: AppTheme.th(context))),
+                    Icon(Icons.work_rounded, size: 12, color: AppTheme.textHint),
+                    Text(' ${work.toStringAsFixed(1)}h  ',
+                        style: TextStyle(fontSize: 11, color: AppTheme.th(context))),
+                    Icon(Icons.mood_rounded, size: 12, color: AppTheme.textHint),
+                    Text(' $mood/10',
+                        style: TextStyle(fontSize: 11, color: AppTheme.th(context))),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(AppTheme.radiusFull),
+            ),
+            child: Text(CheckInViewModel.riskLabel(level),
+                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: color)),
+          ),
         ],
       ),
     );
