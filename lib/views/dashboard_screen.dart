@@ -1,6 +1,5 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../viewmodels/auth_viewmodel.dart';
@@ -34,7 +33,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     // Score: invert burnout (high burnout = low wellness)
     final wellness = result != null ? (100 - result.score).round() : 0;
-    final moodValue = result != null ? checkinVM.mood : 0;
 
     return Scaffold(
       body: SafeArea(
@@ -81,19 +79,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ? () => Navigator.push(context,
                       MaterialPageRoute(builder: (_) => const ResultScreen()))
                   : () => widget.onSwitchTab(1),
-            ),
-            const SizedBox(height: 20),
-
-            // ══ Mood row ══
-            Text('Choose your mood for today',
-                style: Theme.of(context).textTheme.titleSmall),
-            const SizedBox(height: 12),
-            _MoodRow(
-              selectedMood: moodValue,
-              onSelect: (m) {
-                HapticFeedback.selectionClick();
-                checkinVM.mood = m;
-              },
             ),
             const SizedBox(height: 20),
 
@@ -300,54 +285,6 @@ class _RingPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_RingPainter old) => old.percent != percent;
-}
-
-// ══════════════════════════════════════════
-//  MOOD ROW
-// ══════════════════════════════════════════
-class _MoodRow extends StatelessWidget {
-  final int selectedMood;
-  final void Function(int) onSelect;
-
-  const _MoodRow({required this.selectedMood, required this.onSelect});
-
-  static const _moods = [
-    (2, '😫'),
-    (4, '😟'),
-    (6, '😐'),
-    (8, '🙂'),
-    (10, '😄'),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: _moods.map((m) {
-        final selected = (selectedMood - m.$1).abs() <= 1 && selectedMood > 0;
-        return GestureDetector(
-          onTap: () => onSelect(m.$1),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            width: 52, height: 52,
-            decoration: BoxDecoration(
-              color: selected
-                  ? AppTheme.accent.withValues(alpha: 0.15)
-                  : AppTheme.card(context),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: selected ? AppTheme.accent : AppTheme.outline(context),
-                width: selected ? 2 : 1,
-              ),
-            ),
-            alignment: Alignment.center,
-            child: Text(m.$2,
-                style: TextStyle(fontSize: selected ? 24 : 20)),
-          ),
-        );
-      }).toList(),
-    );
-  }
 }
 
 // ══════════════════════════════════════════
