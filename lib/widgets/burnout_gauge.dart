@@ -87,7 +87,9 @@ class _BurnoutGaugeState extends State<BurnoutGauge>
             children: [
               CustomPaint(
                 size: Size(widget.size, widget.size),
-                painter: _GaugePainter(score: score, color: color),
+                painter: _GaugePainter(
+                    score: score, color: color,
+                    bgColor: AppTheme.sl(context)),
               ),
               Column(
                 mainAxisSize: MainAxisSize.min,
@@ -96,15 +98,17 @@ class _BurnoutGaugeState extends State<BurnoutGauge>
                     score.round().toString(),
                     style: TextStyle(
                       fontSize: widget.size * 0.22,
-                      fontWeight: FontWeight.bold,
-                      color: color,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.tp(context),
+                      fontFamily: 'Poppins',
                     ),
                   ),
                   Text(
                     label,
                     style: TextStyle(
                       fontSize: widget.size * 0.07,
-                      color: AppTheme.textSecondary,
+                      color: AppTheme.ts(context),
+                      fontFamily: 'Poppins',
                     ),
                   ),
                 ],
@@ -120,8 +124,9 @@ class _BurnoutGaugeState extends State<BurnoutGauge>
 class _GaugePainter extends CustomPainter {
   final double score;
   final Color color;
+  final Color bgColor;
 
-  _GaugePainter({required this.score, required this.color});
+  _GaugePainter({required this.score, required this.color, required this.bgColor});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -132,7 +137,7 @@ class _GaugePainter extends CustomPainter {
 
     // Background arc
     final bgPaint = Paint()
-      ..color = AppTheme.surfaceLight
+      ..color = bgColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = 14
       ..strokeCap = StrokeCap.round;
@@ -170,5 +175,5 @@ class _GaugePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_GaugePainter old) =>
-      old.score != score || old.color != color;
+      old.score != score || old.color != color || old.bgColor != bgColor;
 }

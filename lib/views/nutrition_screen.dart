@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../models/food_item.dart';
 import '../theme/app_theme.dart';
-import '../services/gemini_service.dart';
 import '../services/voice_service.dart';
 import '../viewmodels/nutrition_viewmodel.dart';
 import '../widgets/mic_button.dart';
@@ -26,36 +25,33 @@ class _NutritionScreenState extends State<NutritionScreen> {
   }
 
   Future<void> _handleVoiceFood(BuildContext context, String text) async {
+    if (text.trim().isEmpty) return;
     final vm = context.read<NutritionViewModel>();
-    const groqKey = String.fromEnvironment('GROQ_API_KEY');
-    if (groqKey.isEmpty) return;
-    final gemini = GeminiService(apiKey: groqKey);
-    final parsed = await gemini.parseFoodFromVoice(text);
-    if (parsed == null || parsed.isEmpty) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not understand. Try tapping a food.')),
-        );
-      }
-      return;
+    final result = await vm.addFoodsByVoice(text);
+    if (!context.mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    String msg;
+    switch (result.errorReason) {
+      case 'ai_unavailable':
+        msg = 'Voice logging needs GROQ_API_KEY — run via `bash run.sh` or pass --dart-define=GROQ_API_KEY=…';
+        break;
+      case 'no_foods_loaded':
+        msg = 'Food list not loaded yet — try again in a moment.';
+        break;
+      case 'parse_failed':
+        msg = 'Could not understand. Try tapping a food.';
+        break;
+      default:
+        if (result.added == 0) {
+          msg = 'No matching foods found in "$text".';
+        } else {
+          final s = result.added > 1 ? 's' : '';
+          final skipNote = result.skipped > 0 ? ' (${result.skipped} skipped)' : '';
+          msg = 'Added ${result.added} item$s$skipNote';
+        }
     }
-    int added = 0;
-    for (final item in parsed) {
-      final name = (item['name'] as String? ?? '').toLowerCase();
-      final qty = (item['quantity'] as num?)?.toDouble() ?? 1.0;
-      final match = vm.foodItems.where(
-        (f) => f.name.toLowerCase().contains(name) || name.contains(f.name.toLowerCase()),
-      );
-      if (match.isNotEmpty) {
-        await vm.addFood(match.first.id.toString(), qty);
-        added++;
-      }
-    }
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(added > 0 ? 'Added $added item${added > 1 ? "s" : ""}' : 'No matching foods found')),
-      );
-    }
+    messenger.showSnackBar(SnackBar(content: Text(msg)));
   }
 
   double _multiplier(FoodItem food, double qty) =>

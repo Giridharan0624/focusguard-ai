@@ -262,11 +262,15 @@ class _MoodRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Map the 1-10 mood to one of the 5 buckets (indices 0..4, values 2/4/6/8/10).
+    // Round-half-up so e.g. mood=3 → bucket 1 (value 4), mood=5 → bucket 2 (value 6).
+    final selectedIndex = ((selected.clamp(1, 10) - 1) ~/ 2);
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: List.generate(5, (i) {
         final moodValue = (i * 2) + 2;
-        final isSelected = (selected - moodValue).abs() <= 1;
+        final isSelected = i == selectedIndex;
         return GestureDetector(
           onTap: () => onSelect(moodValue),
           child: Column(

@@ -12,17 +12,29 @@ class HistoryScreen extends StatefulWidget {
 }
 
 class _HistoryScreenState extends State<HistoryScreen> {
+  int _lastSeenSubmitVersion = 0;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<HistoryViewModel>().load();
+      context.read<HistoryViewModel>().load(forceServer: true);
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<HistoryViewModel>();
+    // Auto-reload whenever a new check-in has been submitted since the last
+    // time this screen rendered — keeps the list in sync without a manual tap.
+    final checkinVersion = context.select<CheckInViewModel, int>(
+        (c) => c.submitVersion);
+    if (checkinVersion != _lastSeenSubmitVersion) {
+      _lastSeenSubmitVersion = checkinVersion;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) vm.load(forceServer: true);
+      });
+    }
     final entries = vm.entries;
 
     double avg = 0;
@@ -33,7 +45,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
     return Scaffold(
       body: SafeArea(
-        child: ListView(
+        child: RefreshIndicator(
+          color: AppTheme.accent,
+          onRefresh: () => vm.load(forceServer: true),
+          child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 120),
           children: [
             // ══ Header ══
@@ -129,6 +145,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   entry: entry.value, isFirst: entry.key == 0)),
             ],
           ],
+        ),
         ),
       ),
     );

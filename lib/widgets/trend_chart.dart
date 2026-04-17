@@ -30,21 +30,18 @@ class TrendChart extends StatelessWidget {
             show: true,
             horizontalInterval: 25,
             getDrawingHorizontalLine: (_) => FlLine(
-              color: AppTheme.surfaceLight,
+              color: AppTheme.sl(context),
               strokeWidth: 1,
             ),
             drawVerticalLine: false,
           ),
           titlesData: FlTitlesData(
             leftTitles: const AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
+                sideTitles: SideTitles(showTitles: false)),
             rightTitles: const AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
+                sideTitles: SideTitles(showTitles: false)),
             topTitles: const AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
+                sideTitles: SideTitles(showTitles: false)),
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
@@ -59,9 +56,9 @@ class TrendChart extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 8),
                     child: Text(
                       labels[idx],
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: AppTheme.textHint,
+                        color: AppTheme.th(context),
                       ),
                     ),
                   );
@@ -74,20 +71,20 @@ class TrendChart extends StatelessWidget {
             LineChartBarData(
               spots: spots,
               isCurved: true,
-              color: AppTheme.primary,
+              color: AppTheme.accent,
               barWidth: 3,
               dotData: FlDotData(
                 show: true,
                 getDotPainter: (spot, _, bar, index) => FlDotCirclePainter(
                   radius: 5,
-                  color: AppTheme.primary,
+                  color: AppTheme.accent,
                   strokeWidth: 2,
-                  strokeColor: AppTheme.background,
+                  strokeColor: AppTheme.bg(context),
                 ),
               ),
               belowBarData: BarAreaData(
                 show: true,
-                color: AppTheme.primary.withValues(alpha: 0.1),
+                color: AppTheme.accent.withValues(alpha: 0.12),
               ),
             ),
           ],

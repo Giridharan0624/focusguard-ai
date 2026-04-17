@@ -101,7 +101,7 @@ class _CalorieRingState extends State<CalorieRing>
                     'kcal',
                     style: TextStyle(
                       fontSize: widget.size * 0.08,
-                      color: AppTheme.textHint,
+                      color: AppTheme.th(context),
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -109,7 +109,7 @@ class _CalorieRingState extends State<CalorieRing>
                     '${remaining.round()} left',
                     style: TextStyle(
                       fontSize: widget.size * 0.07,
-                      color: AppTheme.textSecondary,
+                      color: AppTheme.ts(context),
                     ),
                   ),
                 ],

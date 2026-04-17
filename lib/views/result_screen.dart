@@ -345,7 +345,12 @@ class _SimulationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final reduction = (current - simulated).round();
+    // Convert burnout scores to wellness (100 - burnout) for consistent UX
+    // with the hero card above. Higher = better.
+    final currentWellness = (100 - current).round();
+    final afterWellness = (100 - simulated).round();
+    final improvement = afterWellness - currentWellness;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -370,6 +375,12 @@ class _SimulationCard extends StatelessWidget {
               const SizedBox(width: 10),
               Text('If You Fix It',
                   style: Theme.of(context).textTheme.titleSmall),
+              const Spacer(),
+              Text('Wellness',
+                  style: TextStyle(
+                      fontSize: 11,
+                      color: AppTheme.th(context),
+                      letterSpacing: 0.5)),
             ],
           ),
           const SizedBox(height: 16),
@@ -377,7 +388,8 @@ class _SimulationCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _ScoreBox(
-                label: 'Current', score: current,
+                label: 'Current',
+                score: currentWellness.toDouble(),
                 color: AppTheme.riskColor(CheckInViewModel.riskLevel(current)),
               ),
               Column(
@@ -391,14 +403,15 @@ class _SimulationCard extends StatelessWidget {
                       color: AppTheme.mintAccent.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Text('-$reduction',
+                    child: Text('+$improvement',
                         style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
                             color: AppTheme.mintAccent)),
                   ),
                 ],
               ),
               _ScoreBox(
-                label: 'After', score: simulated,
+                label: 'After',
+                score: afterWellness.toDouble(),
                 color: AppTheme.riskColor(CheckInViewModel.riskLevel(simulated)),
               ),
             ],

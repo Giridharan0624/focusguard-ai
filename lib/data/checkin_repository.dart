@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import '../models/user_input.dart';
 import 'firestore_service.dart';
 
@@ -12,7 +14,9 @@ class CheckInRepository {
       ...input.toMap(),
       'burnout_score': burnoutScore,
     };
+    debugPrint('[CheckInRepo] save uid=$uid date=${input.dateKey} score=$burnoutScore');
     await _firestore.checkIns(uid).doc(input.dateKey).set(data);
+    debugPrint('[CheckInRepo] save COMPLETE date=${input.dateKey}');
   }
 
   /// Get the most recent [count] burnout scores (oldest first).
@@ -51,17 +55,40 @@ class CheckInRepository {
   }
 
   /// Get all check-ins (newest first) for history screen.
-  Future<List<Map<String, dynamic>>> getAll(String uid) async {
-    final snapshot = await _firestore
-        .checkIns(uid)
-        .orderBy('date', descending: true)
-        .get();
+  /// [forceServer] tries the Firestore server first so a just-written check-in
+  /// actually appears; if the server is unreachable we transparently fall back
+  /// to the offline cache instead of erroring the whole screen.
+  Future<List<Map<String, dynamic>>> getAll(String uid,
+      {bool forceServer = false}) async {
+    final query =
+        _firestore.checkIns(uid).orderBy('date', descending: true);
 
-    return snapshot.docs.map((doc) {
+    QuerySnapshot snapshot;
+    String sourceUsed;
+    if (forceServer) {
+      try {
+        snapshot = await query.get(const GetOptions(source: Source.server));
+        sourceUsed = 'server';
+      } on FirebaseException catch (e) {
+        debugPrint('[CheckInRepo] getAll server fetch failed (${e.code}) — falling back to cache');
+        snapshot = await query.get(const GetOptions(source: Source.cache));
+        sourceUsed = 'cache(fallback)';
+      }
+    } else {
+      snapshot = await query.get();
+      sourceUsed = 'default';
+    }
+
+    final results = snapshot.docs.map((doc) {
       final data = doc.data() as Map<String, dynamic>;
       data['id'] = doc.id;
       return data;
     }).toList();
+    debugPrint('[CheckInRepo] getAll uid=$uid forceServer=$forceServer source=$sourceUsed docs=${results.length} fromCache=${snapshot.metadata.isFromCache} pendingWrites=${snapshot.metadata.hasPendingWrites}');
+    for (final r in results) {
+      debugPrint('[CheckInRepo]   - id=${r['id']} date=${r['date']} score=${r['burnout_score']}');
+    }
+    return results;
   }
 
   /// Delete all check-in data for a user.

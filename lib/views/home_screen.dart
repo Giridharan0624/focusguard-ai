@@ -29,7 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     if (index == 3) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        context.read<HistoryViewModel>().load();
+        context.read<HistoryViewModel>().load(forceServer: true);
       });
     }
   }

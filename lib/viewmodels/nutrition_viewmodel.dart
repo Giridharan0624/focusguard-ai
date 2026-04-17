@@ -86,6 +86,63 @@ class NutritionViewModel extends ChangeNotifier {
     }
   }
 
+  /// Parse a spoken phrase via Groq and add matched foods to today's log.
+  /// Returns (added, skipped, errorReason). errorReason is non-null only on hard failure.
+  Future<({int added, int skipped, String? errorReason})> addFoodsByVoice(
+      String text) async {
+    final gemini = _geminiService;
+    if (gemini == null || !gemini.isAvailable) {
+      return (added: 0, skipped: 0, errorReason: 'ai_unavailable');
+    }
+    if (foodItems.isEmpty) {
+      return (added: 0, skipped: 0, errorReason: 'no_foods_loaded');
+    }
+
+    final parsed = await gemini.parseFoodFromVoice(
+      text,
+      knownFoodNames: foodItems.map((f) => f.name).toList(),
+    );
+    if (parsed == null) {
+      return (added: 0, skipped: 0, errorReason: 'parse_failed');
+    }
+
+    int added = 0;
+    int skipped = 0;
+    for (final item in parsed) {
+      final rawName = (item['name'] as String? ?? '').trim().toLowerCase();
+      if (rawName.isEmpty) {
+        skipped++;
+        continue;
+      }
+      final qty = (item['quantity'] as num?)?.toDouble() ?? 1.0;
+
+      FoodItem? match;
+      for (final f in foodItems) {
+        if (f.name.toLowerCase() == rawName) { match = f; break; }
+      }
+      match ??= foodItems.cast<FoodItem?>().firstWhere(
+        (f) =>
+            f!.name.toLowerCase().contains(rawName) ||
+            rawName.contains(f.name.toLowerCase()),
+        orElse: () => null,
+      );
+      if (match == null) {
+        skipped++;
+        continue;
+      }
+
+      // qty from Groq is a count of servings. For 'nos' that's the count of
+      // pieces; for 'grams'/'ml' it must be multiplied by servingSize so the
+      // stored quantity is the actual amount (grams/ml), which is what the
+      // nutrition multiplier (qty / servingSize) expects.
+      final storeQty =
+          match.unit == 'nos' ? qty : qty * match.servingSize;
+      await addFood(match.id.toString(), storeQty);
+      added++;
+    }
+    return (added: added, skipped: skipped, errorReason: null);
+  }
+
   /// Remove a logged food entry.
   Future<void> removeLog(String logId) async {
     try {

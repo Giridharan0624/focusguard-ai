@@ -55,9 +55,9 @@ class CauseChart extends StatelessWidget {
                 const SizedBox(width: 6),
                 Text(
                   e.key,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
-                    color: AppTheme.textSecondary,
+                    color: AppTheme.ts(context),
                   ),
                 ),
               ],

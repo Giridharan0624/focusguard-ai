@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import '../data/checkin_repository.dart';
 import '../services/auth_service.dart';
 
+
 class HistoryViewModel extends ChangeNotifier {
   List<Map<String, dynamic>> entries = [];
   bool isLoading = false;
@@ -16,15 +17,18 @@ class HistoryViewModel extends ChangeNotifier {
   })  : _authService = authService,
         _repository = repository;
 
-  Future<void> load() async {
+  Future<void> load({bool forceServer = false}) async {
     isLoading = true;
     errorMessage = null;
     notifyListeners();
 
     try {
       final uid = _authService.uid;
-      entries = await _repository.getAll(uid);
+      debugPrint('[HistoryVM] load uid=$uid forceServer=$forceServer');
+      entries = await _repository.getAll(uid, forceServer: forceServer);
+      debugPrint('[HistoryVM] load DONE entries=${entries.length}');
     } catch (e) {
+      debugPrint('[HistoryVM] load ERROR: $e');
       errorMessage = 'Failed to load history.';
     }
 

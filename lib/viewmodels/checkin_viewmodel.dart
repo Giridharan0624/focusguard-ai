@@ -45,6 +45,10 @@ class CheckInViewModel extends ChangeNotifier {
   bool isLoading = false;
   String? errorMessage;
 
+  /// Monotonic counter incremented after every successful check-in save.
+  /// HistoryViewModel/HistoryScreen watches this to auto-refresh.
+  int submitVersion = 0;
+
   // ── AI state ──
   String? aiInsight;
   List<Suggestion>? aiSuggestions;
@@ -159,6 +163,7 @@ class CheckInViewModel extends ChangeNotifier {
       final simulation = _simulationService.simulate(input);
 
       await _repository.save(uid, input, score);
+      submitVersion++;
 
       final topCause = _topCause(causes);
 

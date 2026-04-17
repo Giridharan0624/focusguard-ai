@@ -18,11 +18,11 @@ class MacroDonut extends StatelessWidget {
   Widget build(BuildContext context) {
     final total = protein + carbs + fat;
     if (total == 0) {
-      return const SizedBox(
+      return SizedBox(
         height: 120,
         child: Center(
           child: Text('No macros yet',
-              style: TextStyle(color: AppTheme.textHint, fontSize: 13)),
+              style: TextStyle(color: AppTheme.th(context), fontSize: 13)),
         ),
       );
     }
@@ -120,10 +120,10 @@ class _MacroRow extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         Text(label,
-            style: TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
+            style: TextStyle(fontSize: 13, color: AppTheme.ts(context))),
         const Spacer(),
         Text('${grams.round()}g',
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.tp(context))),
         const SizedBox(width: 6),
         Text('$percent%',
             style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w600)),
