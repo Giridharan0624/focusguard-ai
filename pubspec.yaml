@@ -27,6 +27,9 @@ dependencies:
   # State Management
   provider: ^6.1.5
 
+  # Persistence
+  shared_preferences: ^2.3.3
+
   # Charts
   fl_chart: ^0.70.2
 
